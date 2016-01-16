@@ -1,0 +1,28 @@
+        enum Tokens{MNEMONIC=0x100,
+                    NUMBER,
+                    IMMNUMBER,
+		            REGISTER,
+                    SYMBOL,
+                    IMMSYMBOL,
+                    OTHERS};
+
+
+        enum Tokens{VOID,
+        			INT,
+        			FLOAT,
+        			IDENTIFIER,
+        			INT_CONSTANT,
+        			FLOAT_CONSTANT,
+        			RETURN,
+        			OR_OP,
+        			AND_OP
+        			EQ_OP,
+        			NE_OP,
+        			LE_OP,
+        			GE_OP,
+        			INC_OP,
+        			STRING_LITERAL,
+        			IF,
+        			ELSE,
+        			WHILE,
+        			FOR};
