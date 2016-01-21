@@ -10,7 +10,7 @@ rparen: )
 lblock: {
 IDENTIFIER: a
 equal: =
-INT_CONSTANT: 3
+STRING_LITERAL: "3-;\"4e12"
 semi-colon: ;
 IDENTIFIER: b
 equal: =

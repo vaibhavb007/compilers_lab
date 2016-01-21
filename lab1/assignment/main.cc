@@ -31,6 +31,9 @@ int main() {
 		case Scanner::FOR:
             cout << "FOR: " << text << '\n';
 			break;
+		case Scanner::STRING_LITERAL:
+            cout << "STRING_LITERAL: " << text << '\n';
+			break;
 		case Scanner::IDENTIFIER:
             cout << "IDENTIFIER: " << text << '\n';
 			break;

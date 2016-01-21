@@ -194,3 +194,4 @@ sequence contains \ and ", they must be preceded with a \. Apart from
 are t and n.  
 
 
+"\""[[^["\"|"\""]]["\""|"\\"|"\t"|"\n"]]*"\""       return STRING_LITERAL;

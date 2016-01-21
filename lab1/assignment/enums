@@ -1,5 +1,7 @@
-        enum Tokens{VARIABLE=0x100,
-        			IDENTIFIER,
+        enum Tokens{INT=0x100,
+        			FLOAT,
+                                VOID,
+                                IDENTIFIER,
         			INT_CONSTANT,
         			FLOAT_CONSTANT,
         			RETURN,
@@ -14,4 +16,5 @@
         			ELSE,
         			WHILE,
         			FOR,
-        			OTHERS};
+        			OTHERS,
+                                STRING_LITERAL};
