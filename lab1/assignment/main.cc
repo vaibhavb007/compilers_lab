@@ -7,8 +7,14 @@ int main() {
 	{
 		string const &text = scanner.matched();
 		switch (token) {
-		case Scanner::VARIABLE:
-			cout << "VARIABLE: " << text << '\n';
+		case Scanner::INT:
+			cout << "INT: " << text << '\n';
+			break;
+		case Scanner::VOID:
+			cout << "VOID: " << text << '\n';
+			break;
+		case Scanner::FLOAT:
+			cout << "FLOAT: " << text << '\n';
 			break;
 		case Scanner::INT_CONSTANT:
 			cout << "INT_CONSTANT: " << text << '\n';
