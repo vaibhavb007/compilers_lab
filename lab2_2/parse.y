@@ -48,8 +48,9 @@ declarator
         | '*' declarator 
         ;
 
-primary_expression 
-        : l_expression
+primary_expression              // The smallest expressions, need not have a l_value
+      
+        : IDENTIFIER            // primary expression has IDENTIFIER now
         | INT_CONSTANT 
         | FLOAT_CONSTANT
         | STRING_LITERAL
@@ -80,10 +81,12 @@ assignment_statement
 	|  expression ';'  
 	;
 
-expression             //assignment expressions are right associative
+expression                                   //assignment expressions are right associative
         :  logical_or_expression
-        |  l_expression '=' expression 
-        ;
+//      |  l_expression '=' expression       // This is the most significant change --
+        |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
+        ;                                    // This may generate programs that are syntactically incorrect.
+                                             // Eliminate them during semantic analysis.
 
 logical_or_expression            // The usual hierarchy that starts here...
 	: logical_and_expression
@@ -120,27 +123,20 @@ multiplicative_expression
 	;
 unary_expression
 	: postfix_expression  				
-	| unary_operator postfix_expression 
-	;
+	| unary_operator unary_expression     // unary_operator can only be '*' on the LHS of '='
+	;                                     // you have to enforce this during semantic analysis
 
 postfix_expression
 	: primary_expression  				
-        | IDENTIFIER '(' ')' 				
-	| IDENTIFIER '(' expression_list ')'
+        | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
+	    | IDENTIFIER '(' expression_list ')'    // Cannot appear on the LHS of '='  Enforce this.
         | postfix_expression '[' expression ']'
         | postfix_expression '.' IDENTIFIER
         | postfix_expression PTR_OP IDENTIFIER 
-	| postfix_expression INC_OP 	// ... and ends here			
+	    | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
 	;
 
-l_expression                // A separate non-terminal for l_expressions
-        : IDENTIFIER
-        | l_expression '[' expression ']'  	
-        | '*' l_expression
-        | l_expression '.' IDENTIFIER
-        | l_expression PTR_OP IDENTIFIER
-        | '(' l_expression ')'	
-        ;
+// There used to be a set of productions for l_expression at this point.
 
 expression_list
         : expression
