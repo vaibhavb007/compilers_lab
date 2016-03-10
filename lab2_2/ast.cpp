@@ -1,3 +1,43 @@
+global_entry :: global_entry(structorfun a, string b, string c, funTable*d){
+	gl = a;
+	symbol_name = b;
+	ret_type = c;
+	symtab = d;
+}
+
+global_entry :: global_entry(structorfun a, string b){
+	gl = a;
+	symbol_name = b;
+	ret_type = NULL;
+	symtab = NULL;
+}
+
+fun_entry :: fun_entry(string a, paramorlocal b, string c, int d, int e){
+	symbol_name = a;
+	isparam = b;
+	type = c;
+	size = d;
+	offset = e;
+}
+
+void funTable :: addEntry(fun_entry f){
+	local_table.push_back(f);
+}
+
+void fun_entry :: print(){
+	cout<<"symbol_name : "<<symbol_name<<"; PARAM/LOCAL : "<<isparam<<"; type : "<<type<<"; size : "<<size<<"; offset : "<<offset<<endl;
+}
+
+void funTable :: print(){
+	for(int i=0; i<local_table.size(); i++){
+		local_table[i].print();
+	}
+}
+
+void global_entry :: print(){
+	cout<<"symbol_name : "<<symbol_name<<"; STRUCT/FUN : "<<structorfun<<"; ret_type : "<<ret_type<<endl;
+}
+
 Empty :: Empty(){
 }
 
@@ -29,7 +69,7 @@ fncall :: fncall(abstract_astnode* idef){
 }
 
 fncall :: fncall(abstract_astnode* idef, vector<abstract_astnode*> v){
-	id = id;
+	id = idef;
 	exprList = v;
 }
 
@@ -247,3 +287,7 @@ void Args :: print(){
 void Args :: add_arg(abstract_astnode* a){
 	args.push_back(a);
 }
+
+vector<global_entry> gst;
+funTable* current;
+int global_offset;

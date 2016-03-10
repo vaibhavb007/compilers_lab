@@ -17,32 +17,36 @@ public:
 // typeExp astnode_type;
 };
 
-enum structorfun{"struct","fun"};
-
-class global_entry{
-public:
-    global_entry();
-    structorfun gl;
-    string symbol_name;
-    string ret_type;
-    funTable* symtab;
-};
+enum structorfun{STRUCT, FUN};
+enum paramorlocal{PARAM, LOCAL};
 
 class fun_entry{
 public:
-    fun_entry();
     string symbol_name;
-    bool isparam;
+    paramorlocal isparam;
     string type;
     int size;
     int offset;
+    fun_entry(string a, bool b, string c, int d, int e);
+    void print();
 };
 
 class funTable{
 public:
     vector<fun_entry> local_table;
-    funTable();
     void addEntry(fun_entry f);
+    void print();
+};
+
+class global_entry{
+public:
+    structorfun gl;
+    string symbol_name;
+    string ret_type;
+    funTable* symtab;
+    global_entry(structorfun a, string b, string c, funTable* d);
+    global_entry(structorfun a, string b);
+    void print();
 };
 
 class Empty : public abstract_astnode
@@ -228,3 +232,7 @@ public:
     vector<abstract_astnode*> args;
     void print();
 };
+
+extern vector<global_entry> gst;
+extern funTable* current;
+extern int global_offset;

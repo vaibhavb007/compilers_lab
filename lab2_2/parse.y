@@ -1,7 +1,13 @@
-%debug
 %scanner Scanner.h
 %scanner-token-function d_scanner.lex()
-%token VOID INT FLOAT FLOAT_CONSTANT INT_CONSTANT AND_OP OR_OP EQ_OP NE_OP GE_OP LE_OP STRING_LITERAL IF ELSE WHILE FOR RETURN STRUCT IDENTIFIER INC_OP PTR_OP
+%token VOID INT FLOAT INT_CONSTANT FLOAT_CONSTANT RETURN IF ELSE WHILE FOR IDENTIFIER STRING_LITERAL
+%token GE_OP LE_OP EQ_OP NE_OP OR_OP AND_OP INC_OP STRUCT PTR_OP
+%polymorphic Int : int; Float : float; String : std::string; ast : abstract_astnode*
+%type <Int> INT_CONSTANT
+%type <Float> FLOAT_CONSTANT
+%type <String> STRING_LITERAL, IDENTIFIER
+%type <ast> compound_statement, statement_list, statement, assignment_statement, expression, logical_and_expression, equality_expression, relational_expression, additive_expression, multiplicative_expression, unary_expression, postfix_expression, primary_expression, l_expression, expression_list, selection_statement, iteration_statement, declaration_list, declaration, declarator_list, unary_operator
+
 %%
 
 translation_unit
