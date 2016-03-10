@@ -17,6 +17,34 @@ public:
 // typeExp astnode_type;
 };
 
+enum structorfun{"struct","fun"};
+
+class global_entry{
+public:
+    global_entry();
+    structorfun gl;
+    string symbol_name;
+    string ret_type;
+    funTable* symtab;
+};
+
+class fun_entry{
+public:
+    fun_entry();
+    string symbol_name;
+    bool isparam;
+    string type;
+    int size;
+    int offset;
+};
+
+class funTable{
+public:
+    vector<fun_entry> local_table;
+    funTable();
+    void addEntry(fun_entry f);
+};
+
 class Empty : public abstract_astnode
 {
 public:
@@ -163,7 +191,7 @@ public:
     Arrow(abstract_astnode* a, abstract_astnode* b);
     void print();
     abstract_astnode* lexpr;
-    abstract_astnode*id;    
+    abstract_astnode*id;
 };
 
 class Member : public abstract_astnode
