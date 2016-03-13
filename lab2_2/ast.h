@@ -238,7 +238,7 @@ public:
 
 extern vector<global_entry> gst;
 extern funTable* current;
-extern string type, old_type;
+extern string type, old_type, fun_type;
 extern bool isstruct;
 extern bool islocal;
 extern int size, last_offset, type_size, curr_size;

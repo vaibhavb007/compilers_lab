@@ -301,7 +301,7 @@ void Args :: add_arg(abstract_astnode* a){
 
 vector<global_entry> gst;
 funTable* current;
-string type, old_type;
+string type, old_type, fun_type;
 bool isstruct; //if we are in struct or in a function
 bool islocal;	//inside a function, if we are in a arguments or not
 int size, last_offset, type_size, curr_size;

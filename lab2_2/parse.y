@@ -9,12 +9,18 @@
 %type <ast> compound_statement, statement_list, statement, assignment_statement, expression, logical_and_expression, logical_or_expression, equality_expression, relational_expression, additive_expression, multiplicative_expression, unary_expression, postfix_expression, primary_expression, l_expression, expression_list, selection_statement, iteration_statement, declaration_list, declaration, declarator_list, unary_operator
 %%
 
-translation_unit
-        :  struct_specifier
+translation_unit:
+    struct_specifier
  	| function_definition
  	| translation_unit function_definition
-        | translation_unit struct_specifier
-        ;
+    {
+        for(int i=0; i<gst.size(); i++){
+            gst[i].print();
+            gst[i].symtab->print();
+        }
+    }
+    | translation_unit struct_specifier
+    ;
 
 struct_specifier 
         : STRUCT IDENTIFIER
@@ -34,13 +40,26 @@ struct_specifier
                     gst[i].update_size(size); break;
                 }
             }
-            gst[i].print();
-        	current->print();
         }
         ;
 
 function_definition
-	: type_specifier fun_declarator compound_statement 
+	: type_specifier
+    {
+        current = new funTable();
+        isstruct = false;
+        islocal = false;
+        fun_type = type;
+        size = 0;
+    }
+    fun_declarator
+    {
+        global_entry a(1, fun_name, fun_type, current);
+        gst.push_back(a);
+        islocal = true;
+        size = 0;
+    }
+    compound_statement
 	;
 
 type_specifier                   // This is the information
@@ -93,7 +112,7 @@ fun_declarator
     }    
     | '*' fun_declarator  //The * is associated with the function name
     {
-
+        fun_type = "pointer(" + fun_type +")";
     }
 	;
 
@@ -105,7 +124,15 @@ parameter_list
 
 parameter_declaration
 	: type_specifier declarator
-        ;
+    {
+        
+        size += curr_size;
+        fun_entry a (name, 0, type, curr_size, size);
+        current->addEntry(a);
+        type = old_type;
+        curr_size = type_size;
+    }
+    ;
 
 declarator
 	: IDENTIFIER
@@ -129,6 +156,8 @@ declarator
 primary_expression              // The smallest expressions, need not have a l_value
         : IDENTIFIER            // primary expression has IDENTIFIER now
         {
+            Identifier*a = new Identifier($1);
+            $$ = a;
 			bool flag = false;
             for(int i=0; i<current->local_table.size(); i++){
                 if(current->local_table[i].symbol_name == $1){
@@ -138,8 +167,6 @@ primary_expression              // The smallest expressions, need not have a l_v
                 }
             }
             if(!flag) std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
-            Identifier*a = new Identifier($1);
-			$$ = a;
 		}
         | INT_CONSTANT
         {
@@ -176,7 +203,7 @@ compound_statement
 	}
     | '{' declaration_list statement_list '}'
     {
-    	$$ = $3;
+        $$ = $3;
     	$$ -> print();
     }
 	;
@@ -233,6 +260,7 @@ expression                                   //assignment expressions are right 
         :  logical_or_expression
         {
     		$$ = $1;
+            $$->type = $1->type;
     	}
         |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
         {
