@@ -267,9 +267,23 @@ postfix_expression
 		$$ = new fncall(a,((Args*)$3)->args);
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
+    {
+        $$ = new ArrayRef($1,$3);
+    }
     | postfix_expression '.' IDENTIFIER
+    {
+        Identifier* a = new Identifier($3);
+        $$ = new Member($1, a);
+    }
     | postfix_expression PTR_OP IDENTIFIER
+    {
+        Identifier* a = new Identifier($3);
+        $$ = new Arrow($1, a);
+    }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
+    {
+		$$ = new opsingle("PP", $1);
+	}
 	;
 
 // There used to be a set of productions for l_expression at this point.
