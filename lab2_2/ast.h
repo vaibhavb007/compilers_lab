@@ -35,6 +35,7 @@ class funTable{
 public:
     vector<fun_entry> local_table;
     void addEntry(fun_entry f);
+    funTable(funTable*a, funTable*b);
     void print();
 };
 
@@ -231,6 +232,15 @@ public:
     void add_arg(abstract_astnode* a);
     vector<abstract_astnode*> args;
     void print();
+};
+
+class fun_declarator : public abstract_astnode
+{
+public:
+    fun_declarator(string a, funTable*b);
+    fun_declarator(string a);
+    string id;
+    funTable* args;
 };
 
 extern vector<global_entry> gst;

@@ -20,6 +20,11 @@ fun_entry :: fun_entry(string a, paramorlocal b, string c, int d, int e){
 	offset = e;
 }
 
+funTable :: funTable(funTable*a, funTable*b){
+	local_table = a->local_table;
+	local_table.insert(local_table.end(), b->local_table.begin(), b->local_table.end());
+}
+
 void funTable :: addEntry(fun_entry f){
 	local_table.push_back(f);
 }
@@ -286,6 +291,16 @@ void Args :: print(){
 
 void Args :: add_arg(abstract_astnode* a){
 	args.push_back(a);
+}
+
+fun_declarator :: fun_declarator(string a, funTable*b){
+	id = a;
+	args = b;
+}
+
+fun_declarator :: fun_declarator(string a){
+	id = a;
+	args = NULL;
 }
 
 vector<global_entry> gst;
