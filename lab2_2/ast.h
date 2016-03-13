@@ -45,7 +45,7 @@ public:
     string ret_type;
     funTable* symtab;
     global_entry(structorfun a, string b, string c, funTable* d);
-    global_entry(structorfun a, string b);
+    global_entry(structorfun a, string b, funTable*d);
     void print();
 };
 

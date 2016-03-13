@@ -9,7 +9,7 @@ global_entry :: global_entry(structorfun a, string b){
 	gl = a;
 	symbol_name = b;
 	ret_type = NULL;
-	symtab = NULL;
+	symtab = d;
 }
 
 fun_entry :: fun_entry(string a, paramorlocal b, string c, int d, int e){

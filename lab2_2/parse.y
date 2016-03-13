@@ -12,11 +12,17 @@ translation_unit
         ;
 
 struct_specifier 
-        : STRUCT IDENTIFIER '{' declaration_list '}' ';'
+        : STRUCT IDENTIFIER '{' declaration_list '}' ';'{
+        	global_entry a(STRUCT, $2, current);
+        	gst.push_back(a);
+        }
         ;
 
 function_definition
-	: type_specifier fun_declarator compound_statement 
+	: type_specifier fun_declarator compound_statement {
+		global entry a(FUN, (*fun_declarator)$2->id, $1, current);
+		gst.push_back(a);
+	}
 	;
 
 type_specifier                   // This is the information 
