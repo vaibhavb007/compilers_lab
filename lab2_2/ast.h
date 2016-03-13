@@ -8,6 +8,7 @@ class abstract_astnode
 {
 public:
     virtual void print () = 0;
+    string type;
 // virtual std::string generate_code(const symbolTable&) = 0;
 // virtual basic_types getType() = 0;
 // virtual bool checkTypeofAST() = 0;
@@ -17,13 +18,13 @@ public:
 // typeExp astnode_type;
 };
 
-enum structorfun{STRUCT, FUN};
-enum paramorlocal{PARAM, LOCAL};
+// enum structorfun{STRUC, FUN};
+// enum paramorlocal{PARAM, LOCAL};
 
 class fun_entry{
 public:
     string symbol_name;
-    paramorlocal isparam;
+    bool isparam; //1 is it is local variable, 0 if it is a parameter
     string type;
     int size;
     int offset;
@@ -35,18 +36,19 @@ class funTable{
 public:
     vector<fun_entry> local_table;
     void addEntry(fun_entry f);
-    funTable(funTable*a, funTable*b);
     void print();
 };
 
 class global_entry{
 public:
-    structorfun gl;
+    bool gl;    //1 if it is function otherwise 0
     string symbol_name;
     string ret_type;
     funTable* symtab;
-    global_entry(structorfun a, string b, string c, funTable* d);
-    global_entry(structorfun a, string b, funTable*d);
+    int size;
+    global_entry(bool a, string b, string c, funTable* d);
+    global_entry(bool a, string b, funTable*d);
+    void update_size(int a);
     void print();
 };
 
@@ -234,15 +236,10 @@ public:
     void print();
 };
 
-class fun_declarator : public abstract_astnode
-{
-public:
-    fun_declarator(string a, funTable*b);
-    fun_declarator(string a);
-    string id;
-    funTable* args;
-};
-
 extern vector<global_entry> gst;
 extern funTable* current;
-extern int global_offset;
+extern string type, old_type;
+extern bool isstruct;
+extern bool islocal;
+extern int size, last_offset, type_size, curr_size;
+extern string name, fun_name;

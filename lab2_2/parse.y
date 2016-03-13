@@ -6,7 +6,7 @@
 %type <Int> INT_CONSTANT
 %type <Float> FLOAT_CONSTANT
 %type <String> STRING_LITERAL, IDENTIFIER
-%type <ast> compound_statement, statement_list, statement, assignment_statement, expression, logical_and_expression, equality_expression, relational_expression, additive_expression, multiplicative_expression, unary_expression, postfix_expression, primary_expression, l_expression, expression_list, selection_statement, iteration_statement, declaration_list, declaration, declarator_list, unary_operator, fun_declarator, type_specifier
+%type <ast> compound_statement, statement_list, statement, assignment_statement, expression, logical_and_expression, logical_or_expression, equality_expression, relational_expression, additive_expression, multiplicative_expression, unary_expression, postfix_expression, primary_expression, l_expression, expression_list, selection_statement, iteration_statement, declaration_list, declaration, declarator_list, unary_operator
 %%
 
 translation_unit
@@ -17,49 +17,74 @@ translation_unit
         ;
 
 struct_specifier 
-        : STRUCT IDENTIFIER '{' declaration_list '}' ';'
+        : STRUCT IDENTIFIER
         {
-        	global_entry a(STRUCT, (*Identifier)$2->id, current);
-        	gst.push_back(a);
+        	current = new funTable();
+        	isstruct = true;
+        	last_offset = 0;
+            size = 0;
+            global_entry a(0, $2, current);
+            gst.push_back(a);
+        }
+        '{' declaration_list '}' ';'
+        {
+        	int i;
+            for(i=0; i<gst.size(); i++){
+                if(!gst[i].gl && gst[i].symbol_name == $2){
+                    gst[i].update_size(size); break;
+                }
+            }
+            gst[i].print();
+        	current->print();
         }
         ;
 
 function_definition
 	: type_specifier fun_declarator compound_statement 
-	{
-		funTable *b = new funTable((*fun_declarator)$2->args, current);
-		global entry a(FUN, (*fun_declarator)$2->id, (*type_specifier)$1->type, b);
-		gst.push_back(a);
-	}
 	;
 
 type_specifier                   // This is the information
         : VOID 	                 // that gets associated with each identifier
         {
-        	$$ = new type_specifier("VOID");
+        	type = "VOID";
+            old_type = type;
+            type_size = 4;
+            curr_size = type_size;
         }
         | INT
         {
-        	$$ = new type_specifier("INT");
+        	type = "INT";
+            old_type = type;
+            type_size = 4;
+            curr_size = type_size;
         }
 		| FLOAT
 		{
-			$$ = new type_specifier("FLOAT");
+			type = "FLOAT";
+            old_type = type;
+            type_size = 4;
+            curr_size = type_size;
 		}
         | STRUCT IDENTIFIER
         {
-        	string a = "STRUCT" + (Identifier*)$2->id;
-        	$$ = new type_specifier(a);
+        	bool flag = false;
+            for(int i=0; i<gst.size(); i++){
+                if(!gst[i].gl && gst[i].symbol_name == $2){
+                    flag = true;
+                    type_size = gst[i].size;
+                    curr_size = type_size;
+                    break;
+                }
+            }
+            if(!flag) std::cerr<<"Error:The struct is not defined\n";
+            type = "STRUCT " + $2;
+            old_type = type;
         }
         ;
 
 fun_declarator
 	: IDENTIFIER '(' parameter_list ')'
 	| IDENTIFIER '(' ')'
-	{
-		fun_declarator a = new fun_declarator($1);
-		$$ = a;
-	}
         | '*' fun_declarator  //The * is associated with the
 	;                      //function name
 
@@ -75,31 +100,58 @@ parameter_declaration
 
 declarator
 	: IDENTIFIER
+	{
+        name = $1;
+	}
 	| declarator '[' primary_expression']' // check separately that it is a constant
-        | '*' declarator
-        ;
+    {
+        if($3->type == "INT_CONSTANT"){
+            type = "array("+ std::to_string(((IntConst*)$3)->cons) + "," + type +")";
+            curr_size = curr_size * ((IntConst*)$3)->cons;
+        }
+    }
+    | '*' declarator
+    {
+        type = "pointer(" + type +")";
+        curr_size = 4;
+    }
+    ;
 
 primary_expression              // The smallest expressions, need not have a l_value
 
         : IDENTIFIER            // primary expression has IDENTIFIER now
         {
-			$$ = $1;
+			bool flag = false;
+            for(int i=0; i<current->local_table.size(); i++){
+                if(current->local_table[i].symbol_name == $1){
+                    flag = true;
+                    $$->type = current->local_table[i].type;
+                    break;
+                }
+            }
+            if(!flag) std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
+            Identifier*a = new Identifier($1);
+			$$ = a;
 		}
         | INT_CONSTANT
         {
         	$$ = new IntConst($1);
+            $$->type = "INT_CONSTANT";
         }
         | FLOAT_CONSTANT
         {
 			$$ = new FloatConst($1);
+            $$->type = "FLOAT_CONSTANT";
 		}
         | STRING_LITERAL
         {
         	$$ = new StringConst($1);
+            $$->type = "STRING_LITERAL";
         }
         | '(' expression ')'
         {
 			$$ = $2;
+            $$->type = $2->type;
 		}
         ;
 
@@ -174,7 +226,6 @@ expression                                   //assignment expressions are right 
         {
     		$$ = $1;
     	}
-//      |  l_expression '=' expression       // This is the most significant change --
         |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
         {
             $$ = new Ass($1,$3);
@@ -379,5 +430,43 @@ declaration
 
 declarator_list
 	: declarator
+    {
+        size += curr_size;
+        if(isstruct){
+            fun_entry a (name, 1, type, curr_size, -size);
+            current->addEntry(a);
+        }
+        else{
+            if(islocal){
+                fun_entry b(name, 1, type, curr_size, -size);
+                current->addEntry(b);
+            }
+            else{
+                fun_entry b(name, 0, type, curr_size, size);
+                current->addEntry(b);
+            }
+        }
+        type = old_type;
+        curr_size = type_size;
+    }
 	| declarator_list ',' declarator
+    {
+        size += curr_size;
+        if(isstruct){
+            fun_entry a (name, 1, type, curr_size, -size);
+            current->addEntry(a);
+        }
+        else{
+            if(islocal){
+                fun_entry b(name, 1, type, curr_size, -size);
+                current->addEntry(b);
+            }
+            else{
+                fun_entry b(name, 0, type, curr_size, size);
+                current->addEntry(b);
+            }
+        }
+        type = old_type;
+        curr_size = type_size;
+    }
  	;

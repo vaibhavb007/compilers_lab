@@ -1,18 +1,23 @@
-global_entry :: global_entry(structorfun a, string b, string c, funTable*d){
+global_entry :: global_entry(bool a, string b, string c, funTable*d){
 	gl = a;
 	symbol_name = b;
 	ret_type = c;
 	symtab = d;
+	size = 0;
 }
 
-global_entry :: global_entry(structorfun a, string b){
+global_entry :: global_entry(bool a, string b, funTable*d){
 	gl = a;
 	symbol_name = b;
-	ret_type = NULL;
+	ret_type = "";
 	symtab = d;
 }
 
-fun_entry :: fun_entry(string a, paramorlocal b, string c, int d, int e){
+void global_entry :: update_size(int a){
+	size = a;
+}
+
+fun_entry :: fun_entry(string a, bool b, string c, int d, int e){
 	symbol_name = a;
 	isparam = b;
 	type = c;
@@ -20,17 +25,15 @@ fun_entry :: fun_entry(string a, paramorlocal b, string c, int d, int e){
 	offset = e;
 }
 
-funTable :: funTable(funTable*a, funTable*b){
-	local_table = a->local_table;
-	local_table.insert(local_table.end(), b->local_table.begin(), b->local_table.end());
-}
-
 void funTable :: addEntry(fun_entry f){
 	local_table.push_back(f);
 }
 
 void fun_entry :: print(){
-	cout<<"symbol_name : "<<symbol_name<<"; PARAM/LOCAL : "<<isparam<<"; type : "<<type<<"; size : "<<size<<"; offset : "<<offset<<endl;
+	cout<<"symbol_name : "<<symbol_name<<"; PARAM/LOCAL : ";
+	if(isparam) cout<<"LOCAL";
+	else cout<<"PARAM";
+	cout<<"; type : "<<type<<"; size : "<<size<<"; offset : "<<offset<<endl;
 }
 
 void funTable :: print(){
@@ -40,7 +43,10 @@ void funTable :: print(){
 }
 
 void global_entry :: print(){
-	cout<<"symbol_name : "<<symbol_name<<"; STRUCT/FUN : "<<structorfun<<"; ret_type : "<<ret_type<<endl;
+	cout<<"symbol_name : "<<symbol_name<<"; STRUCT/FUN : ";
+	if(gl)	cout<<"FUN";
+	else cout<<"STRUCT";
+	cout<<"; ret_type : "<<ret_type<<endl;
 }
 
 Empty :: Empty(){
@@ -293,16 +299,13 @@ void Args :: add_arg(abstract_astnode* a){
 	args.push_back(a);
 }
 
-fun_declarator :: fun_declarator(string a, funTable*b){
-	id = a;
-	args = b;
-}
-
-fun_declarator :: fun_declarator(string a){
-	id = a;
-	args = NULL;
-}
-
 vector<global_entry> gst;
 funTable* current;
-int global_offset;
+string type, old_type;
+bool isstruct; //if we are in struct or in a function
+bool islocal;	//inside a function, if we are in a arguments or not
+int size, last_offset, type_size, curr_size;
+//size->cumulative sum of variables used uptil now
+//type_size-> size of int/float/..
+//curr_size-> updated size of current variable
+string name, fun_name;
