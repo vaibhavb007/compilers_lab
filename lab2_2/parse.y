@@ -84,9 +84,18 @@ type_specifier                   // This is the information
 
 fun_declarator
 	: IDENTIFIER '(' parameter_list ')'
+    {
+        fun_name = $1;
+    }
 	| IDENTIFIER '(' ')'
-        | '*' fun_declarator  //The * is associated with the
-	;                      //function name
+    {
+        fun_name = $1;
+    }    
+    | '*' fun_declarator  //The * is associated with the function name
+    {
+
+    }
+	;
 
 
 parameter_list
@@ -118,7 +127,6 @@ declarator
     ;
 
 primary_expression              // The smallest expressions, need not have a l_value
-
         : IDENTIFIER            // primary expression has IDENTIFIER now
         {
 			bool flag = false;
