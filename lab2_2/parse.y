@@ -16,7 +16,10 @@ translation_unit:
     {
         for(int i=0; i<gst.size(); i++){
             gst[i].print();
+            std::cout<<"\n";
+            std::cout<<"Symbol table for "<<gst[i].symbol_name<<"\n";
             gst[i].symtab->print();
+            std::cout<<"\n";
         }
     }
     | translation_unit struct_specifier
