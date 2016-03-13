@@ -28,14 +28,14 @@ function_definition
 type_specifier                   // This is the information
         : VOID 	                 // that gets associated with each identifier
         | INT
-	| FLOAT
+	    | FLOAT
         | STRUCT IDENTIFIER
         ;
 
 fun_declarator
 	: IDENTIFIER '(' parameter_list ')'
 	| IDENTIFIER '(' ')'
-        | '*' fun_declarator  //The * is associated with the
+    | '*' fun_declarator  //The * is associated with the
 	;                      //function name
 
 
@@ -46,7 +46,7 @@ parameter_list
 
 parameter_declaration
 	: type_specifier declarator
-        ;
+    ;
 
 declarator
 	: IDENTIFIER
@@ -59,7 +59,7 @@ primary_expression
         {
 			$$ = $1;
 		}
-        | INT_CONSTANT              //Write new stuff here. 
+        | INT_CONSTANT              //Write new stuff here.
         {
 			$$ = $1;
 		}
