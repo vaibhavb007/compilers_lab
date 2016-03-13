@@ -299,6 +299,12 @@ void Args :: add_arg(abstract_astnode* a){
 	args.push_back(a);
 }
 
+bool compatible(string a, string b){
+    if(a == b) return true;
+    if(a == "INT" && b == "FLOAT") return true;
+    if(b == "INT" && a == "FLOAT") return true;
+}
+
 vector<global_entry> gst;
 funTable* current;
 string type, old_type, fun_type;
@@ -309,3 +315,4 @@ int size, last_offset, type_size, curr_size;
 //type_size-> size of int/float/..
 //curr_size-> updated size of current variable
 string name, fun_name;
+bool prim_expr;

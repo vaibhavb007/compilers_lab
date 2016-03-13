@@ -98,7 +98,10 @@ type_specifier                   // This is the information
                     break;
                 }
             }
-            if(!flag) std::cerr<<"Error:The struct is not defined\n";
+            if(!flag){
+                std::cerr<<"Error:The struct is not defined\n";
+                exit(1);
+            }
             type = "STRUCT " + $2;
             old_type = type;
         }
@@ -140,11 +143,22 @@ parameter_declaration
 declarator
 	: IDENTIFIER
 	{
+        bool flag = true;
+            for(int i=0; i<current->local_table.size(); i++){
+                if(current->local_table[i].symbol_name == $1){
+                    flag = false;
+                    break;
+                }
+            }
+            if(!flag){
+                std::cerr<<"Error: The variable "<<$1<<" is already declared\n";
+                exit(1);
+            }
         name = $1;
 	}
 	| declarator '[' primary_expression']' // check separately that it is a constant
     {
-        if($3->type == "INT_CONSTANT"){
+        if(prim_expr){
             type = "array("+ std::to_string(((IntConst*)$3)->cons) + "," + type +")";
             curr_size = curr_size * ((IntConst*)$3)->cons;
         }
@@ -161,35 +175,53 @@ primary_expression              // The smallest expressions, need not have a l_v
         {
             Identifier*a = new Identifier($1);
             $$ = a;
+            prim_expr = false;
 			bool flag = false;
             for(int i=0; i<current->local_table.size(); i++){
                 if(current->local_table[i].symbol_name == $1){
                     flag = true;
                     $$->type = current->local_table[i].type;
+                    $$->lvalue = true;
                     break;
                 }
             }
-            if(!flag) std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
+            if(!flag){
+                std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
+                exit(1);
+            }
 		}
         | INT_CONSTANT
         {
         	$$ = new IntConst($1);
-            $$->type = "INT_CONSTANT";
+            $$->type = "INT";
+            $$->lvalue = false;
+            prim_expr = true;
         }
         | FLOAT_CONSTANT
         {
 			$$ = new FloatConst($1);
-            $$->type = "FLOAT_CONSTANT";
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+            prim_expr = false;
 		}
         | STRING_LITERAL
         {
         	$$ = new StringConst($1);
-            $$->type = "STRING_LITERAL";
+            $$->type = "STRING";
+            $$->lvalue = false;
+            prim_expr = false;
         }
         | '(' expression ')'
         {
 			$$ = $2;
             $$->type = $2->type;
+            $$->lvalue = false;
+            if($2->type == "INT"){
+                prim_expr = true;
+            }
+            else{
+                prim_expr = false;
+            }
 		}
         ;
 
@@ -263,11 +295,17 @@ expression                                   //assignment expressions are right 
         :  logical_or_expression
         {
     		$$ = $1;
-            $$->type = $1->type;
     	}
         |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
         {
-            $$ = new Ass($1,$3);
+            if($1->lvalue){
+                $$ = new Ass($1,$3);
+                $$->lvalue = false;
+            }
+            else{
+                std::cerr<<"Error: lvalue required as left operand of assignment\n";
+                exit(1);
+            }
         }
 
         ;                                    // This may generate programs that are syntactically incorrect.
@@ -277,22 +315,36 @@ logical_or_expression            // The usual hierarchy that starts here...
 	: logical_and_expression
     {
         $$ = $1;
-        $$->type = $1->type;
     }
     | logical_or_expression OR_OP logical_and_expression
     {
-        $$ = new opdual("OR_OP",$1,$3);
+        if(($1->type == "INT" || $1->type == "FLOAT") && ($3->type == "INT" || $3->type == "FLOAT")){
+            $$ = new opdual("OR_OP",$1,$3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: Invalid operands to binary "<<OR_OP<<"\n";
+            exit(1);
+        }
     }
 	;
 logical_and_expression
         : equality_expression
         {
         	$$ = $1;
-            $$->type = $1->type;
         }
         | logical_and_expression AND_OP equality_expression
         {
-        	$$ = new opdual("AND_OP", $1, $3);
+        	if(($1->type == "INT" || $1->type == "FLOAT") && ($3->type == "INT" || $3->type == "FLOAT")){
+            $$ = new opdual("AND_OP",$1,$3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: Invalid operands to binary "<<AND_OP<<"\n";
+            exit(1);
+        }
         }
 	;
 
@@ -300,38 +352,152 @@ equality_expression
 	: relational_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
     | equality_expression EQ_OP relational_expression
     {
-        $$ = new opdual("EQ_OP", $1, $3);
+        if(($1->type == "INT" || $1->type == "FLOAT") && ($3->type == "INT" || $3->type == "FLOAT")){
+            $$ = new opdual("EQ_OP",$1,$3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: Invalid operands to binary "<<EQ_OP<<"\n";
+            exit(1);
+        }
     }
 	| equality_expression NE_OP relational_expression
     {
-		$$ = new opdual("NE_OP", $1, $3);
+		if(($1->type == "INT" || $1->type == "FLOAT") && ($3->type == "INT" || $3->type == "FLOAT")){
+            $$ = new opdual("NE_OP",$1,$3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: Invalid operands to binary "<<NE_OP<<"\n";
+            exit(1);
+        }
 	}
 	;
 relational_expression
 	: additive_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
     | relational_expression '<' additive_expression
     {
-    	$$ = new opdual("LT", $1, $3);
+    	if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("LT-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("LT-FLOAT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("LT-FLOAT", a, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("LT-FLOAT", $1, a);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary < \n";
+            exit(1);
+        }
 	}
 	| relational_expression '>' additive_expression
     {
-		$$ = new opdual("GT", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("GT-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("GT-FLOAT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("GT-FLOAT", a, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("GT-FLOAT", $1, a);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary > \n";
+            exit(1);
+        }
 	}
 	| relational_expression LE_OP additive_expression
     {
-		$$ = new opdual("LE_OP", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("LE_OP-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("LE_OP-FLOAT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("LE_OP-FLOAT", a, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("LE_OP-FLOAT", $1, a);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary "<<LE_OP<<"\n";
+            exit(1);
+        }
 	}
     | relational_expression GE_OP additive_expression
     {
-        $$ = new opdual("GE_OP", $1, $3);
+        if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("GE_OP-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("GE_OP-FLOAT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("GE_OP-FLOAT", a, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("GE_OP-FLOAT", $1, a);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary "<<GE_OP<<"\n";
+            exit(1);
+        }
     }
 	;
 
@@ -339,15 +505,64 @@ additive_expression
 	: multiplicative_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
 	| additive_expression '+' multiplicative_expression
     {
-		$$ = new opdual("PLUS", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("PLUS-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("PLUS-FLOAT", $1, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("PLUS-FLOAT", a, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("PLUS-FLOAT", $1, a);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary + \n";
+            exit(1);
+        }
 	}
 	| additive_expression '-' multiplicative_expression
     {
-		$$ = new opdual("MINUS", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("MINUS-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("MINUS-FLOAT", $1, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("MINUS-FLOAT", a, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("MINUS-FLOAT", $1, a);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary - \n";
+            exit(1);
+        }
 	}
 	;
 
@@ -355,22 +570,70 @@ multiplicative_expression
 	: unary_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
 	| multiplicative_expression '*' unary_expression
     {
-		$$ = new opdual("MULT", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("MULT-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("MULT-FLOAT", $1, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("MULT-FLOAT", a, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("MULT-FLOAT", $1, a);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary * \n";
+            exit(1);
+        }
 	}
 	| multiplicative_expression '/' unary_expression
     {
-		$$ = new opdual("DIV", $1, $3);
+		if($1->type == "INT" && $3->type == "INT"){
+            $$ = new opdual("DIV-INT", $1, $3);
+            $$->type = "INT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "FLOAT"){
+            $$ = new opdual("DIV-FLOAT", $1, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "INT" && $3->type == "FLOAT"){
+            opsingle*a = new opsingle("TO-FLOAT", $1);
+            $$ = new opdual("DIV-FLOAT", a, $3);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else if($1->type == "FLOAT" && $3->type == "INT"){
+            opsingle*a = new opsingle("TO-FLOAT", $3);
+            $$ = new opdual("DIV-FLOAT", $1, a);
+            $$->type = "FLOAT";
+            $$->lvalue = false;
+        }
+        else{
+            std::cerr<<"Error: invalid operands to binary / \n";
+            exit(1);
+        }
 	}
 	;
 unary_expression
 	: postfix_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
 	| unary_operator unary_expression
     {
@@ -383,35 +646,40 @@ postfix_expression
 	: primary_expression
     {
 		$$ = $1;
-        $$->type = $1->type;
 	}
     | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
     {
         Identifier*a = new Identifier($1);
         $$ = new fncall(a);
+        $$->lvalue = false;
     }
     | IDENTIFIER '(' expression_list ')'    // Cannot appear on the LHS of '='  Enforce this.
     {
 		Identifier*a = new Identifier($1);
 		$$ = new fncall(a,((Args*)$3)->args);
+        $$->lvalue = false;
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
         $$ = new ArrayRef($1,$3);
+        $$->lvalue = true;
     }
     | postfix_expression '.' IDENTIFIER
     {
         Identifier* a = new Identifier($3);
         $$ = new Member($1, a);
+        $$->lvalue = true;
     }
     | postfix_expression PTR_OP IDENTIFIER
     {
         Identifier* a = new Identifier($3);
         $$ = new Arrow($1, a);
+        $$->lvalue = true;
     }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {
 		$$ = new opsingle("PP", $1);
+        $$->lvalue = false;
 	}
 	;
 

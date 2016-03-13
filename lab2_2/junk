@@ -1,0 +1,14 @@
+(Block [(Ass(Identifier a)(Identifier k))
+(Return(IntConst 0))])symbol_name : hello; STRUCT/FUN : STRUCT; ret_type : 
+
+Symbol table for hello
+symbol_name : a; PARAM/LOCAL : LOCAL; type : INT; size : 4; offset : -4
+symbol_name : b; PARAM/LOCAL : LOCAL; type : FLOAT; size : 4; offset : -8
+
+symbol_name : main; STRUCT/FUN : FUN; ret_type : INT
+
+Symbol table for main
+symbol_name : b; PARAM/LOCAL : LOCAL; type : INT; size : 4; offset : -4
+symbol_name : a; PARAM/LOCAL : LOCAL; type : INT; size : 4; offset : -8
+symbol_name : k; PARAM/LOCAL : LOCAL; type : STRUCT hello; size : 8; offset : -16
+

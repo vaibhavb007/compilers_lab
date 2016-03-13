@@ -9,6 +9,7 @@ class abstract_astnode
 public:
     virtual void print () = 0;
     string type;
+    bool lvalue;
 // virtual std::string generate_code(const symbolTable&) = 0;
 // virtual basic_types getType() = 0;
 // virtual bool checkTypeofAST() = 0;
@@ -236,6 +237,8 @@ public:
     void print();
 };
 
+bool compatible(string a, string b);
+
 extern vector<global_entry> gst;
 extern funTable* current;
 extern string type, old_type, fun_type;
@@ -243,3 +246,4 @@ extern bool isstruct;
 extern bool islocal;
 extern int size, last_offset, type_size, curr_size;
 extern string name, fun_name;
+extern bool prim_expr;

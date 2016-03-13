@@ -1,8 +1,14 @@
-struct abc{
-	int a,b[10][20], *c;
+struct hello {
+        int a;
+        float b;
 };
 
-int asd(int z, struct abc d){
-	int a;
-	a = 4;
+int main() {
+        int b;
+        int a;
+        struct hello k;  
+
+        a = k;
+
+        return 0;
 }
