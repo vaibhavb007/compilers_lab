@@ -25,7 +25,7 @@ translation_unit:
     | translation_unit struct_specifier
     ;
 
-struct_specifier 
+struct_specifier
         : STRUCT IDENTIFIER
         {
         	current = new funTable();
@@ -112,7 +112,7 @@ fun_declarator
 	| IDENTIFIER '(' ')'
     {
         fun_name = $1;
-    }    
+    }
     | '*' fun_declarator  //The * is associated with the function name
     {
         fun_type = "pointer(" + fun_type +")";
@@ -128,7 +128,7 @@ parameter_list
 parameter_declaration
 	: type_specifier declarator
     {
-        
+
         size += curr_size;
         fun_entry a (name, 0, type, curr_size, size);
         current->addEntry(a);
@@ -277,6 +277,7 @@ logical_or_expression            // The usual hierarchy that starts here...
 	: logical_and_expression
     {
         $$ = $1;
+        $$->type = $1->type;
     }
     | logical_or_expression OR_OP logical_and_expression
     {
@@ -287,6 +288,7 @@ logical_and_expression
         : equality_expression
         {
         	$$ = $1;
+            $$->type = $1->type;
         }
         | logical_and_expression AND_OP equality_expression
         {
@@ -298,6 +300,7 @@ equality_expression
 	: relational_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
     | equality_expression EQ_OP relational_expression
     {
@@ -312,6 +315,7 @@ relational_expression
 	: additive_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
     | relational_expression '<' additive_expression
     {
@@ -335,6 +339,7 @@ additive_expression
 	: multiplicative_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
 	| additive_expression '+' multiplicative_expression
     {
@@ -350,6 +355,7 @@ multiplicative_expression
 	: unary_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
 	| multiplicative_expression '*' unary_expression
     {
@@ -364,6 +370,7 @@ unary_expression
 	: postfix_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
 	| unary_operator unary_expression
     {
@@ -376,6 +383,7 @@ postfix_expression
 	: primary_expression
     {
 		$$ = $1;
+        $$->type = $1->type;
 	}
     | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
     {
