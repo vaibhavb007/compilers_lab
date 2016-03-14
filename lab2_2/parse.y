@@ -15,6 +15,7 @@ translation_unit:
  	| translation_unit function_definition
     {
         for(int i=0; i<gst.size(); i++){
+            std::cout<<"\n";
             gst[i].print();
             std::cout<<"\n";
             std::cout<<"Symbol table for "<<gst[i].symbol_name<<"\n";
@@ -673,16 +674,26 @@ postfix_expression
 	}
     | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
     {
+        int count = 0;
+        string s;
         for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
-                if ((gst[i].symtab)->local_table.size() != 0){
-                    std::cerr<<ParserBase::lineNr<<": Number of arguments don't match with definition\n";
+                for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
+                	if(!(gst[i].symtab)->local_table[j].isparam) count++;
                 }
+                s = gst[i].ret_type;
             }
         }
-        Identifier*a = new Identifier($1);
-        $$ = new fncall(a);
-        $$->lvalue = false;
+        if(!count){
+        	Identifier*a = new Identifier($1);
+	        $$ = new fncall(a);
+	        $$->lvalue = false;
+	        $$->type = s;
+        }
+        else{
+        	std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+        	exit(0);
+        }
     }
     | IDENTIFIER '(' expression_list ')'    // Cannot appear on the LHS of '='  Enforce this.
     {
@@ -709,7 +720,6 @@ postfix_expression
     }
     | postfix_expression '.' IDENTIFIER
     {
-        std::cerr<<$1->type<<"\n";
         string s = ($1->type).substr(0,6);
         bool flag = false;
         if(s == "STRUCT"){
@@ -743,9 +753,14 @@ postfix_expression
     }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {
-		$$ = new opsingle("PP", $1);
-        $$->lvalue = false;
-        $$->type = $1->type;
+		if($1->type == "INT" || $1->type == "FLOAT"){
+			$$ = new opsingle("PP", $1);
+	        $$->lvalue = false;
+	        $$->type = $1->type;
+		}
+		else{
+			std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as increment operand \n";
+		}
 	}
 	;
 
