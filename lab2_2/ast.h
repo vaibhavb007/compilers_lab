@@ -239,6 +239,8 @@ public:
 
 bool compatible(string a, string b);
 
+string compute_type(vector<string> a, string b);
+
 extern vector<global_entry> gst;
 extern funTable* current;
 extern string type, old_type, fun_type;
@@ -247,3 +249,4 @@ extern bool islocal;
 extern int size, last_offset, type_size, curr_size;
 extern string name, fun_name;
 extern bool prim_expr;
+extern vector<string> type_store;

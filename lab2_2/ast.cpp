@@ -305,6 +305,14 @@ bool compatible(string a, string b){
     if(b == "INT" && a == "FLOAT") return true;
 }
 
+string compute_type(vector<string> a, string b){
+	if(a.size() == 0) return b;
+	for(int i=a.size()-1; i>=0; i--){
+		b = a[i] + b + ')';
+	}
+	return b;
+}
+
 vector<global_entry> gst;
 funTable* current;
 string type, old_type, fun_type;
@@ -316,3 +324,4 @@ int size, last_offset, type_size, curr_size;
 //curr_size-> updated size of current variable
 string name, fun_name;
 bool prim_expr;
+vector<string> type_store;
