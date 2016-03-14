@@ -1,4 +1,4 @@
-
+%option yylineno
 
 // There may be some flexer directives here
 
@@ -17,7 +17,7 @@ IF|if 										{Parser::d_val__ = std::string (matched());   return ParserBase:
 ELSE|else 									{Parser::d_val__ = std::string (matched());   return ParserBase::ELSE;}
 WHILE|while									{Parser::d_val__ = std::string (matched());   return ParserBase::WHILE;}
 FOR|for										{Parser::d_val__ = std::string (matched());   return ParserBase::FOR;}
-[[:alpha:]][[:alnum:]]*    {Parser::d_val__ = std::string (matched());   return ParserBase::IDENTIFIER;}  
+[[:alpha:]][[:alnum:]]*    {Parser::d_val__ = std::string (matched());   return ParserBase::IDENTIFIER;}
 ">="										{Parser::d_val__ = std::string (matched());   return ParserBase::GE_OP;}
 "<="										{Parser::d_val__ = std::string (matched());   return ParserBase::LE_OP;}
 "=="										{Parser::d_val__ = std::string (matched());   return ParserBase::EQ_OP;}
