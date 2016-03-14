@@ -673,6 +673,7 @@ postfix_expression
 	}
     | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
     {
+        std::cerr<<"in fn\n";
         for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
                 if ((gst[i].symtab)->local_table.size() != 0){
@@ -692,15 +693,16 @@ postfix_expression
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
-        std::string s = $1->type;
-        s = s.substr(0,s.length() - 1);
-        std::size_t pos = s.find(",");
-        s = s.substr(pos);
-        s = s.substr(1,s.length() - 1);
-        $$->type = s;
-        if($3->type == "INT"){
+        std::string s = $1->type.substr(0,5);
+        if (s=="array" && $3->type == "INT"){
+            s = $1->type;
+            s = s.substr(0,s.length() - 1);
+            std::size_t pos = s.find(",");
+            s = s.substr(pos);
+            s = s.substr(1,s.length() - 1);
             $$ = new ArrayRef($1,$3);
             $$->lvalue = true;
+            $$->type = s;
         }
         else{
             std::cerr<<ParserBase::lineNr<<": Error: array subscript is not an integer\n";
@@ -709,7 +711,6 @@ postfix_expression
     }
     | postfix_expression '.' IDENTIFIER
     {
-        std::cerr<<$1->type<<"\n";
         string s = ($1->type).substr(0,6);
         bool flag = false;
         if(s == "STRUCT"){
@@ -717,7 +718,6 @@ postfix_expression
             for(int i=0; i<gst.size(); i++){
                 if(!gst[i].gl && gst[i].symbol_name == ident){
                     for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
-                        std::cerr<<(gst[i].symtab)->local_table[j].symbol_name<<"\n";
                         if((gst[i].symtab)->local_table[j].symbol_name == $3){
                             Identifier* a = new Identifier($3);
                             $$ = new Member($1, a);
