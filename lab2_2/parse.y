@@ -37,7 +37,7 @@ struct_specifier
         }
         declaration_list '}' ';'
         {
-        	int i;
+            int i;
             for(i=0; i<gst.size(); i++){
                 if(!gst[i].gl && gst[i].symbol_name == $2){
                     gst[i].update_size(size); break;
@@ -685,20 +685,43 @@ postfix_expression
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
+        string s = $1->type;
         if($3->type == "INT"){
             $$ = new ArrayRef($1,$3);
             $$->lvalue = true;
         }
         else{
-            std::cerr<<"Error: array subscript is not an integer\n";
+            std::cerr<<ParserBase::lineNr<<": Error: array subscript is not an integer\n";
             exit(0);
         }
     }
     | postfix_expression '.' IDENTIFIER
     {
-        Identifier* a = new Identifier($3);
-        $$ = new Member($1, a);
-        $$->lvalue = true;
+        std::cerr<<$1->type<<"\n";
+        string s = ($1->type).substr(0,6);
+        bool flag = false;
+        if(s == "STRUCT"){
+            string ident = ($1->type).substr(7, ($1->type).size()-7);
+            for(int i=0; i<gst.size(); i++){
+                if(!gst[i].gl && gst[i].symbol_name == ident){
+                    for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
+                        std::cerr<<(gst[i].symtab)->local_table[j].symbol_name<<"\n";
+                        if((gst[i].symtab)->local_table[j].symbol_name == $3){
+                            Identifier* a = new Identifier($3);
+                            $$ = new Member($1, a);
+                            $$->lvalue = true;
+                            $$->type = (gst[i].symtab)->local_table[j].type;
+                            flag = true;
+                        }
+                    } 
+                }
+            }
+        }
+        if(!flag){
+            std::cerr<<ParserBase::lineNr<<": Error: request for member '"<<$3<<"' in something not a structure or union\n";
+            exit(0);
+        }
+                            
     }
     | postfix_expression PTR_OP IDENTIFIER
     {
@@ -766,12 +789,10 @@ iteration_statement
 
 declaration_list
         : declaration
-        | declaration_list declaration
-	;
+        | declaration_list declaration;
 
 declaration
-	: type_specifier declarator_list';'
-	;
+	: type_specifier declarator_list';' ;
 
 declarator_list
 	: declarator

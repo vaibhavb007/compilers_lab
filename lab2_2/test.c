@@ -1,14 +1,14 @@
 struct hello {
-        int a;
-        float b[10][20];
+	int a;
+	float b[10][20];
 };
 
-struct hello main() {
-        int b;
-        int a;
-        struct hello k;  
+struct cool{
+	struct hello asd;
+};
 
-        a = k;
-
-        return 0;
+int main() {
+		struct cool k;
+		struct hello poi;
+		k.asd.a = 0;
 }
