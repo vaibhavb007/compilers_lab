@@ -676,30 +676,83 @@ postfix_expression
     {
         int count = 0;
         string s;
+        bool flag = false;
         for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
+            	flag = true;
                 for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
-                	if(!(gst[i].symtab)->local_table[j].isparam) count++;
+                	if(!(gst[i].symtab)->local_table[j].isparam){
+                		count++;
+                	}
                 }
                 s = gst[i].ret_type;
             }
         }
-        if(!count){
+        if(!count && flag){
         	Identifier*a = new Identifier($1);
 	        $$ = new fncall(a);
 	        $$->lvalue = false;
 	        $$->type = s;
         }
         else{
-        	std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
-        	exit(0);
+        	if(!flag){
+        		std::cerr<<ParserBase::lineNr<<": Error: undefined reference to '"<<$1<<"'\n";
+        		exit(0);	
+        	}
+        	else{
+        		std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+	        	exit(0);
+        	}
         }
     }
     | IDENTIFIER '(' expression_list ')'    // Cannot appear on the LHS of '='  Enforce this.
     {
-		Identifier*a = new Identifier($1);
-		$$ = new fncall(a,((Args*)$3)->args);
-        $$->lvalue = false;
+		int countargs=0, actualargs=((Args*)$3)->args.size();
+		string s;
+		bool flag = false;
+		funTable *curr;
+		for(int i=0; i<gst.size(); i++){
+            if(gst[i].gl && gst[i].symbol_name == $1){
+                for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
+                	if(!(gst[i].symtab)->local_table[j].isparam) countargs++;
+                }
+                s = gst[i].ret_type;
+                curr = gst[i].symtab;
+            }
+        }
+        if(flag){
+        	if(countargs == actualargs){
+        		bool sign = true;
+	        	for(int i=0; i<countargs; i++){
+	        		if(!compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type)){
+	        			sign = false;
+	        			std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
+	        			std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
+	        			exit(0);
+	        		}
+	        	}
+	        	if(sign){
+	        		Identifier*a = new Identifier($1);
+					$$ = new fncall(a,((Args*)$3)->args);
+			        $$->lvalue = false;
+			        $$->type = s;
+	        	}
+	        }
+	        else{
+	        	if(countargs<actualargs){
+	        		std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+	        		exit(0);
+	        	}
+	        	else{
+	        		std::cerr<<ParserBase::lineNr<<": Error: too few arguments to function '"<<$1<<"' \n";
+	        		exit(0);	
+	        	}
+	        }
+        }
+	    else{
+	    	std::cerr<<ParserBase::lineNr<<": Error: undefined reference to '"<<$1<<"'\n";
+        	exit(0);
+	    }
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
@@ -738,18 +791,48 @@ postfix_expression
                     }
                 }
             }
+            if(!flag){
+	            std::cerr<<ParserBase::lineNr<<": Error: request for member '"<<$3<<"' in something not a structure or union\n";
+	            exit(0);
+	        }
         }
-        if(!flag){
-            std::cerr<<ParserBase::lineNr<<": Error: request for member '"<<$3<<"' in something not a structure or union\n";
-            exit(0);
-        }
+	    else{
+	    	std::cerr<<ParserBase::lineNr<<": Error: request for member ‘"<<$3<<"’ in something not a structure or union\n";
+	    	exit(0);
+	    }
 
     }
     | postfix_expression PTR_OP IDENTIFIER
     {
-        Identifier* a = new Identifier($3);
-        $$ = new Arrow($1, a);
-        $$->lvalue = true;
+        bool flag = false;
+        string s = $1->type;
+        string t;
+        s = s.substr(0, 14);
+        if(s == "pointer(STRUCT"){
+        	s = $1->type;
+        	t = s.substr(15, s.size()-16);
+        	for(int i=0; i<gst.size(); i++){
+        		if(!gst[i].gl && gst[i].symbol_name == t){
+        			for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
+        				if((gst[i].symtab)->local_table[j].symbol_name == $3){
+        					Identifier* a = new Identifier($3);
+					        $$ = new Arrow($1, a);
+					        $$->lvalue = true;
+					        $$->type = (gst[i].symtab)->local_table[j].type;
+                            flag = true; break;
+        				}
+        			}
+        		}
+        	}
+        	if(!flag){
+				std::cerr<<ParserBase::lineNr<<": Error: 'struct "<<t<<"' has no member named '"<<$3<<"'\n";
+				exit(0);
+			}
+        }
+        else{
+        	std::cerr<<ParserBase::lineNr<<": Error: invalid type argument of '->'\n";
+        	exit(0);
+        }
     }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {

@@ -1,0 +1,22 @@
+(Block [(Ass(Member(Member(Identifier k)(Identifier asd))(Identifier a))(IntConst 0))
+(Ass(Arrow(Identifier poi)(Identifier a))(IntConst 10))])
+symbol_name : hello; STRUCT/FUN : STRUCT; ret_type : 
+
+Symbol table for hello
+symbol_name : a; PARAM/LOCAL : LOCAL; type : INT; size : 4; offset : -4
+symbol_name : b; PARAM/LOCAL : LOCAL; type : array(10,array(20,FLOAT)); size : 800; offset : -804
+
+
+symbol_name : cool; STRUCT/FUN : STRUCT; ret_type : 
+
+Symbol table for cool
+symbol_name : asd; PARAM/LOCAL : LOCAL; type : STRUCT hello; size : 804; offset : -804
+
+
+symbol_name : main; STRUCT/FUN : FUN; ret_type : INT
+
+Symbol table for main
+symbol_name : k; PARAM/LOCAL : LOCAL; type : STRUCT cool; size : 804; offset : -804
+symbol_name : poi; PARAM/LOCAL : LOCAL; type : pointer(STRUCT hello); size : 4; offset : -808
+symbol_name : a; PARAM/LOCAL : LOCAL; type : array(10,INT); size : 40; offset : -848
+
