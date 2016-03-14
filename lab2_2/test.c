@@ -3,7 +3,7 @@ struct hello {
         float b;
 };
 
-int main() {
+struct hello main() {
         int b;
         int a;
         struct hello k;  

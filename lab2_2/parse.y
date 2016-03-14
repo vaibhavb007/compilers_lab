@@ -99,8 +99,8 @@ type_specifier                   // This is the information
                 }
             }
             if(!flag){
-                std::cerr<<"Error:The struct is not defined\n";
-                exit(1);
+                std::cerr<<"Error:The struct "<<$2<<" is not defined\n";
+                exit(0);
             }
             type = "STRUCT " + $2;
             old_type = type;
@@ -110,10 +110,33 @@ type_specifier                   // This is the information
 fun_declarator
 	: IDENTIFIER '(' parameter_list ')'
     {
+        bool flag = true;
+        for(int i=0; i<gst.size(); i++){
+            if(gst[i].symbol_name == $1 && gst[i].gl){
+                flag = false;
+                break;
+            }
+        }
+        if(!flag){
+            std::cerr<<"Error: conflicting types for '"<<$1<<"'\n";
+            exit(0);
+        }
         fun_name = $1;
+
     }
 	| IDENTIFIER '(' ')'
     {
+        bool flag = true;
+        for(int i=0; i<gst.size(); i++){
+            if(gst[i].symbol_name == $1 && gst[i].gl){
+                flag = false;
+                break;
+            }
+        }
+        if(!flag){
+            std::cerr<<"Error: conflicting types for '"<<$1<<"'\n";
+            exit(0);
+        }
         fun_name = $1;
     }
     | '*' fun_declarator  //The * is associated with the function name
@@ -151,8 +174,8 @@ declarator
                 }
             }
             if(!flag){
-                std::cerr<<"Error: The variable "<<$1<<" is already declared\n";
-                exit(1);
+                std::cerr<<"Error: The variable '"<<$1<<"' is already declared\n";
+                exit(0);
             }
         name = $1;
 	}
@@ -187,7 +210,7 @@ primary_expression              // The smallest expressions, need not have a l_v
             }
             if(!flag){
                 std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
-                exit(1);
+                exit(0);
             }
 		}
         | INT_CONSTANT
@@ -304,7 +327,7 @@ expression                                   //assignment expressions are right 
             }
             else{
                 std::cerr<<"Error: lvalue required as left operand of assignment\n";
-                exit(1);
+                exit(0);
             }
         }
 
@@ -325,7 +348,7 @@ logical_or_expression            // The usual hierarchy that starts here...
         }
         else{
             std::cerr<<"Error: Invalid operands to binary "<<OR_OP<<"\n";
-            exit(1);
+            exit(0);
         }
     }
 	;
@@ -343,7 +366,7 @@ logical_and_expression
         }
         else{
             std::cerr<<"Error: Invalid operands to binary "<<AND_OP<<"\n";
-            exit(1);
+            exit(0);
         }
         }
 	;
@@ -362,7 +385,7 @@ equality_expression
         }
         else{
             std::cerr<<"Error: Invalid operands to binary "<<EQ_OP<<"\n";
-            exit(1);
+            exit(0);
         }
     }
 	| equality_expression NE_OP relational_expression
@@ -374,7 +397,7 @@ equality_expression
         }
         else{
             std::cerr<<"Error: Invalid operands to binary "<<NE_OP<<"\n";
-            exit(1);
+            exit(0);
         }
 	}
 	;
@@ -409,7 +432,7 @@ relational_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary < \n";
-            exit(1);
+            exit(0);
         }
 	}
 	| relational_expression '>' additive_expression
@@ -438,7 +461,7 @@ relational_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary > \n";
-            exit(1);
+            exit(0);
         }
 	}
 	| relational_expression LE_OP additive_expression
@@ -467,7 +490,7 @@ relational_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary "<<LE_OP<<"\n";
-            exit(1);
+            exit(0);
         }
 	}
     | relational_expression GE_OP additive_expression
@@ -496,7 +519,7 @@ relational_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary "<<GE_OP<<"\n";
-            exit(1);
+            exit(0);
         }
     }
 	;
@@ -532,7 +555,7 @@ additive_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary + \n";
-            exit(1);
+            exit(0);
         }
 	}
 	| additive_expression '-' multiplicative_expression
@@ -561,7 +584,7 @@ additive_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary - \n";
-            exit(1);
+            exit(0);
         }
 	}
 	;
@@ -597,7 +620,7 @@ multiplicative_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary * \n";
-            exit(1);
+            exit(0);
         }
 	}
 	| multiplicative_expression '/' unary_expression
@@ -626,7 +649,7 @@ multiplicative_expression
         }
         else{
             std::cerr<<"Error: invalid operands to binary / \n";
-            exit(1);
+            exit(0);
         }
 	}
 	;
