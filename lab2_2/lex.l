@@ -1,10 +1,11 @@
-%option yylineno
+
 
 // There may be some flexer directives here
 
 %%
-[ \t\n]                                    //skip
+[ \t]                                    //skip
 [ \b]									 //skip
+[ \n]                                       {ParserBase::lineNr++;}
 INT|int										return Parser::INT;
 STRUCT|struct                               return Parser::STRUCT;
 FLOAT|float									return Parser::FLOAT;

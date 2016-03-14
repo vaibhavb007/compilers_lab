@@ -99,7 +99,7 @@ type_specifier                   // This is the information
                 }
             }
             if(!flag){
-                std::cerr<<"Error:The struct "<<$2<<" is not defined\n";
+                std::cerr<<ParserBase::lineNr<<": Error:The struct "<<$2<<" is not defined\n";
                 exit(0);
             }
             type = "STRUCT " + $2;
@@ -118,7 +118,7 @@ fun_declarator
             }
         }
         if(!flag){
-            std::cerr<<"Error: conflicting types for '"<<$1<<"'\n";
+            std::cerr<<ParserBase::lineNr<<": Error: conflicting types for '"<<$1<<"'\n";
             exit(0);
         }
         fun_name = $1;
@@ -134,7 +134,7 @@ fun_declarator
             }
         }
         if(!flag){
-            std::cerr<<"Error: conflicting types for '"<<$1<<"'\n";
+            std::cerr<<ParserBase::lineNr<<": Error: conflicting types for '"<<$1<<"'\n";
             exit(0);
         }
         fun_name = $1;
@@ -174,7 +174,8 @@ declarator
                 }
             }
             if(!flag){
-                std::cerr<<"Error: The variable '"<<$1<<"' is already declared\n";
+                extern int yylineno;
+                std::cerr<<ParserBase::lineNr<<": Error: The variable '"<<$1<<"' is already declared\n";
                 exit(0);
             }
         name = $1;
@@ -209,7 +210,7 @@ primary_expression              // The smallest expressions, need not have a l_v
                 }
             }
             if(!flag){
-                std::cerr<<"Error: The variable "<<$1<<" is not defined\n";
+                std::cerr<<ParserBase::lineNr<<": Error: The variable "<<$1<<" is not defined\n";
                 exit(0);
             }
 		}
@@ -326,7 +327,7 @@ expression                                   //assignment expressions are right 
                 $$->lvalue = false;
             }
             else{
-                std::cerr<<"Error: lvalue required as left operand of assignment\n";
+                std::cerr<<ParserBase::lineNr<<": Error: lvalue required as left operand of assignment\n";
                 exit(0);
             }
         }
@@ -347,7 +348,7 @@ logical_or_expression            // The usual hierarchy that starts here...
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: Invalid operands to binary "<<OR_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: Invalid operands to binary "<<OR_OP<<"\n";
             exit(0);
         }
     }
@@ -365,7 +366,7 @@ logical_and_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: Invalid operands to binary "<<AND_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: Invalid operands to binary "<<AND_OP<<"\n";
             exit(0);
         }
         }
@@ -384,7 +385,7 @@ equality_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: Invalid operands to binary "<<EQ_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: Invalid operands to binary "<<EQ_OP<<"\n";
             exit(0);
         }
     }
@@ -396,7 +397,7 @@ equality_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: Invalid operands to binary "<<NE_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: Invalid operands to binary "<<NE_OP<<"\n";
             exit(0);
         }
 	}
@@ -431,7 +432,7 @@ relational_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary < \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary < \n";
             exit(0);
         }
 	}
@@ -460,7 +461,7 @@ relational_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary > \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary > \n";
             exit(0);
         }
 	}
@@ -489,7 +490,7 @@ relational_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary "<<LE_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary "<<LE_OP<<"\n";
             exit(0);
         }
 	}
@@ -518,7 +519,7 @@ relational_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary "<<GE_OP<<"\n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary "<<GE_OP<<"\n";
             exit(0);
         }
     }
@@ -554,7 +555,7 @@ additive_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary + \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary + \n";
             exit(0);
         }
 	}
@@ -583,7 +584,7 @@ additive_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary - \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary - \n";
             exit(0);
         }
 	}
@@ -619,7 +620,7 @@ multiplicative_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary * \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary * \n";
             exit(0);
         }
 	}
@@ -648,7 +649,7 @@ multiplicative_expression
             $$->lvalue = false;
         }
         else{
-            std::cerr<<"Error: invalid operands to binary / \n";
+            std::cerr<<ParserBase::lineNr<<": Error: invalid operands to binary / \n";
             exit(0);
         }
 	}
