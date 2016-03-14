@@ -1,9 +1,9 @@
 struct hello {
         int a;
-        float b;
+        float a;
 };
 
-struct hello main() {
+int main() {
         int b;
         int a;
         struct hello k;  
