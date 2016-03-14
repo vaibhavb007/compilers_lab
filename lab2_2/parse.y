@@ -26,7 +26,7 @@ translation_unit:
     ;
 
 struct_specifier
-        : STRUCT IDENTIFIER
+        : STRUCT IDENTIFIER '{'
         {
         	current = new funTable();
         	isstruct = true;
@@ -35,7 +35,7 @@ struct_specifier
             global_entry a(0, $2, current);
             gst.push_back(a);
         }
-        '{' declaration_list '}' ';'
+        declaration_list '}' ';'
         {
         	int i;
             for(i=0; i<gst.size(); i++){
@@ -183,13 +183,13 @@ declarator
 	| declarator '[' primary_expression']' // check separately that it is a constant
     {
         if(prim_expr){
-            type = "array("+ std::to_string(((IntConst*)$3)->cons) + "," + type +")";
+            type_store.push_back("array("+ std::to_string(((IntConst*)$3)->cons) + ",");
             curr_size = curr_size * ((IntConst*)$3)->cons;
         }
     }
     | '*' declarator
     {
-        type = "pointer(" + type +")";
+        type_store.push_back("pointer(");
         curr_size = 4;
     }
     ;
@@ -685,8 +685,14 @@ postfix_expression
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
-        $$ = new ArrayRef($1,$3);
-        $$->lvalue = true;
+        if($3->type == "INT"){
+            $$ = new ArrayRef($1,$3);
+            $$->lvalue = true;
+        }
+        else{
+            std::cerr<<"Error: array subscript is not an integer\n";
+            exit(0);
+        }
     }
     | postfix_expression '.' IDENTIFIER
     {
@@ -771,6 +777,7 @@ declarator_list
 	: declarator
     {
         size += curr_size;
+        type = compute_type(type_store, old_type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);
@@ -786,11 +793,13 @@ declarator_list
             }
         }
         type = old_type;
+        type_store.resize(0);
         curr_size = type_size;
     }
 	| declarator_list ',' declarator
     {
         size += curr_size;
+        type = compute_type(type_store, old_type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);
@@ -806,6 +815,7 @@ declarator_list
             }
         }
         type = old_type;
+        type_store.resize(0);
         curr_size = type_size;
     }
  	;
