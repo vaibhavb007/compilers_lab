@@ -10,5 +10,7 @@ struct cool{
 int main() {
 		struct cool k;
 		struct hello poi;
+		int a[10];
 		k.asd.a = 0;
+		a[5] = 6;
 }
