@@ -303,6 +303,94 @@ bool compatible(string a, string b){
     if(a == b) return true;
     if(a == "INT" && b == "FLOAT") return true;
     if(b == "INT" && a == "FLOAT") return true;
+	string s1 = a.substr(0,5);
+	string s2 = b.substr(0,5);
+	if(s1 == "array" && s2=="array"){
+		s1 = a.substr(0,a.length() - 1);
+		std::size_t pos = s1.find(",");
+		s1 = s1.substr(pos);
+		s1 = s1.substr(1,s1.length() - 1);
+
+		s2 = b.substr(0,b.length() - 1);
+		pos = s2.find(",");
+		s2 = s2.substr(pos);
+		s2 = s2.substr(1,s2.length() - 1);
+		if(s1 == s2){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	s1 = a.substr(0,6);
+	s2 = b.substr(0,6);
+	if(s1 == "STRUCT" && s2 == "STRUCT"){
+		string s1 = a.substr(7,a.length() - 7);
+		for(int i=0; i<s1.length();i++){
+			if(s1[i] == ' '){
+				s1 = s1.substr(0,i);
+				break;
+			}
+		}
+
+		string s2 = b.substr(7,b.length() - 7);
+		for(int i=0; i<s2.length();i++){
+			if(s2[i] == ' '){
+				s2 = s2.substr(0,i);
+				break;
+			}
+		}
+
+		if(s1 == s2){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	s1 = a.substr(0,7);
+	s2 = b.substr(0,7);
+
+	if(s1 == "pointer" && s2 == "pointer"){
+		s1 = a.substr(8,a.length() - 9);
+		s2 = b.substr(8,b.length() - 9);
+
+		if(s1=="VOID" || s2=="VOID"){
+			return true;
+		}
+
+		return compatible(s1,s2);
+	}
+
+	s1 = a.substr(0,5);
+	s2 = b.substr(0,5);
+
+	if(s1=="point" && s2=="array"){
+		s1 = a.substr(8,a.length() - 9);
+
+		s2 = b.substr(0,b.length() - 1);
+		std::size_t pos = s2.find(",");
+		s2 = s2.substr(pos);
+		s2 = s2.substr(1,s2.length() - 1);
+		return s1==s2;
+	}
+	s2 = a.substr(0,5);
+	s1 = b.substr(0,5);
+	if(s1=="point" && s2=="array"){
+		s1 = a.substr(7,a.length() - 8);
+		s2 = b.substr(0,b.length() - 1);
+		std::size_t pos = s2.find(",");
+		s2 = s2.substr(pos);
+		s2 = s2.substr(1,s2.length() - 1);
+		return s1==s2;
+	}
+
+
+
+	return false;
+
 }
 
 string compute_type(vector<string> a, string b){
