@@ -673,6 +673,13 @@ postfix_expression
 	}
     | IDENTIFIER '(' ')' 				    // Cannot appear on the LHS of '='. Enforce this.
     {
+        for(int i=0; i<gst.size(); i++){
+            if(gst[i].gl && gst[i].symbol_name == $1){
+                if ((gst[i].symtab)->local_table.size() != 0){
+                    std::cerr<<ParserBase::lineNr<<": Number of arguments don't match with definition\n";
+                }
+            }
+        }
         Identifier*a = new Identifier($1);
         $$ = new fncall(a);
         $$->lvalue = false;
@@ -685,7 +692,12 @@ postfix_expression
 	}
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.
     {
-        string s = $1->type;
+        std::string s = $1->type;
+        s = s.substr(0,s.length() - 1);
+        std::size_t pos = s.find(",");
+        s = s.substr(pos);
+        s = s.substr(1,s.length() - 1);
+        $$->type = s;
         if($3->type == "INT"){
             $$ = new ArrayRef($1,$3);
             $$->lvalue = true;
@@ -713,7 +725,7 @@ postfix_expression
                             $$->type = (gst[i].symtab)->local_table[j].type;
                             flag = true;
                         }
-                    } 
+                    }
                 }
             }
         }
@@ -721,7 +733,7 @@ postfix_expression
             std::cerr<<ParserBase::lineNr<<": Error: request for member '"<<$3<<"' in something not a structure or union\n";
             exit(0);
         }
-                            
+
     }
     | postfix_expression PTR_OP IDENTIFIER
     {
@@ -733,6 +745,7 @@ postfix_expression
     {
 		$$ = new opsingle("PP", $1);
         $$->lvalue = false;
+        $$->type = $1->type;
 	}
 	;
 
