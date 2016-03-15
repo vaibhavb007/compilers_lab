@@ -259,11 +259,13 @@ compound_statement
 	| '{' statement_list '}'
     {
 		$$ = $2;
+		std::cout<<fun_name<<" statement list \n";
 		$$ -> print();
 	}
     | '{' declaration_list statement_list '}'
     {
         $$ = $3;
+        std::cout<<fun_name<<" declaration_list statement list \n";
     	$$ -> print();
     }
 	;
@@ -301,7 +303,13 @@ statement
         }
         | RETURN expression ';'
         {
-        	$$ = new Return($2);
+        	if(compatible(fun_type, $2->type)){
+        		$$ = new Return($2);
+        	}
+        	else{
+        		std::cerr<<ParserBase::lineNr<<": Error: incompatible types when returning type '"<<$2->type<<"' but '"<<fun_type<<"' was expected\n";
+        		exit(0);
+        	}
         }
         ;
 
@@ -324,8 +332,14 @@ expression                                   //assignment expressions are right 
         |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
         {
             if($1->lvalue){
-                $$ = new Ass($1,$3);
-                $$->lvalue = false;
+            	if(compatible($1->type, $3->type)){
+            		$$ = new Ass($1,$3);
+                	$$->lvalue = false;
+            	}
+            	else{
+            		std::cerr<<ParserBase::lineNr<<": Error: incompatible types when assigning to type '"<<$1->type<<"' from type '"<<$3->type<<"'\n";
+            		exit(0);
+            	}
             }
             else{
                 std::cerr<<ParserBase::lineNr<<": Error: lvalue required as left operand of assignment\n";
@@ -713,17 +727,21 @@ postfix_expression
 		funTable *curr;
 		for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
-                for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
+                for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
                 	if(!(gst[i].symtab)->local_table[j].isparam) countargs++;
                 }
                 s = gst[i].ret_type;
                 curr = gst[i].symtab;
+                flag = true;
+                break;
             }
         }
         if(flag){
         	if(countargs == actualargs){
+        		std::cerr<<"hello\n";
         		bool sign = true;
 	        	for(int i=0; i<countargs; i++){
+	        		std::cerr<<curr->local_table[i].type<<" "<<(((Args*)$3)->args[i])->type<<"\n";
 	        		if(!compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type)){
 	        			sign = false;
 	        			std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
