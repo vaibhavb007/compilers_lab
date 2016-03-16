@@ -1,3 +1,0 @@
-main declaration_list statement list 
-(Block [(Ass(STAR(Identifier j))(LT-FLOAT(TO-FLOAT(IntConst 1))
-(FloatConst 0.5)))])
