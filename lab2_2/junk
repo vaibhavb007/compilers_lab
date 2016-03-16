@@ -1,0 +1,2 @@
+main declaration_list statement list 
+(Block [(Ass(Identifier i)(NOT(IntConst 0)))])

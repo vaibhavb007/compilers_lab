@@ -715,13 +715,30 @@ unary_expression
                 $$->type = s;
             }
             else{
-                std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as unary ‘&’ operand\n";
+                std::cerr<<ParserBase::lineNr<<": Error: lvalue required as unary ‘&’ operand\n";
                 exit(0);
             }
         }
         else if(((un_operator*)$1)->op_type == "UMINUS"){
             if($2->type == "INT" || $2->type == "FLOAT"){
                 $$ = new opsingle(((un_operator*)$1)->op_type, $2);
+                $$->lvalue = 0;
+                $$->type = $2->type;
+            }
+            else{
+                std::cerr<<ParserBase::lineNr<<": Error: wrong type argument to unary minus\n";
+                exit(0);
+            }
+        }
+        else if(((un_operator*)$1)->op_type == "NOT"){
+            if($2->type == "INT" || $2->type == "FLOAT" || $2->lvalue){
+                $$ = new opsingle(((un_operator*)$1)->op_type, $2);
+                $$->lvalue = 0;
+                $$->type = $2->type;
+            }
+            else{
+                std::cerr<<ParserBase::lineNr<<": Error: wrong type argument to unary exclamation mark\n";
+                exit(0);
             }
         }
 		//$$ = new opsingle(((un_operator*)$1)->op_type, $2);
