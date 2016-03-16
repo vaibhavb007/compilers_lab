@@ -374,7 +374,7 @@ string compatible(string a, string b){
 		s2 = b.substr(8,b.length() - 9);
 
 		if(s1=="VOID"){
-			ret = '2' + a;
+			ret = "20" + a;
 			return ret;
 		}
 		else if(s2 == "VOID"){

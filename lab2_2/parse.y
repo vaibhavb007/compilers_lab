@@ -811,7 +811,7 @@ postfix_expression
                         t  = t.substr(2,t.length() -2);
                         string s = t.substr(0,5);
                         if(s == "array"){
-                            string s = t;
+                            s = t;
                             s = "TO-" + s;
                             opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
@@ -831,7 +831,25 @@ postfix_expression
                         }
                         s = t.substr(0,7);
                         if(s == "pointer"){
-
+                            if((((Args*)$3)->args[i])->type.substr(0,5) == "array"){
+                                s = t;
+                                s = "TO-" + s;
+                                opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                                string type = (((Args*)$3)->args[i])->type;
+                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                ((Args*)$3)->args[i] = a;
+                                (((Args*)$3)->args[i])->type = type;
+                                (((Args*)$3)->args[i])->lvalue = lvalue;
+                            }
+                            if((((Args*)$3)->args[i])->type.substr(0,5) == "point"){
+                                s = "TO-" + t;
+                                opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                                string type = (((Args*)$3)->args[i])->type;
+                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                ((Args*)$3)->args[i] = a;
+                                (((Args*)$3)->args[i])->type = type;
+                                (((Args*)$3)->args[i])->lvalue = lvalue;
+                            }
                         }
                     }
 	        	}
