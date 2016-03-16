@@ -44,4 +44,5 @@ FOR|for										{Parser::d_val__ = std::string (matched());   return ParserBase
 "["											return '[';
 "]"											return ']';
 "."											return '.';
+"&"											return '&';
 .
