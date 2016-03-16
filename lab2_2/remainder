@@ -2,3 +2,6 @@
 [done]cannot declare variable of void
 [done]making lvalue of arrays false so as to avoid assignment of arrays
 [done]do not return if function is of type void
+
+returning address of a local variable
+assigning the return value of a function returning void
