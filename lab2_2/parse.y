@@ -676,7 +676,27 @@ unary_expression
 	}
 	| unary_operator unary_expression
     {
-		$$ = new opsingle(((un_operator*)$1)->op_type, $2);
+        if(((un_operator*)$1)->op_type == "STAR"){
+            string s = $2->type;
+            if(s.substr(0,3) == "INT" || s.substr(0,5) == "FLOAT"){
+                std::cerr<<ParserBase::lineNr<<": Error: invalid type argument of unary ‘*’ (have '"<<$2->type<<"’)\n";
+                exit(0);
+            }
+            else if(s.substr(0,4) == "VOID"){
+                std::cerr<<ParserBase::lineNr<<": Error: dereferencing ‘void *’ pointer\n";
+                exit(0);
+            }
+            else if(s.substr(0,5) == "array"){
+                $$ = new opsingle(((un_operator*)$1)->op_type, $2);
+                $$->lvalue = true;
+                s = s.substr(0,s.length() - 1);
+                std::size_t pos = s.find(",");
+                s = s.substr(pos);
+                s = s.substr(1,s.length() - 1);
+                $$->type = s;
+            }
+        }
+		//$$ = new opsingle(((un_operator*)$1)->op_type, $2);
 	}
                                         // unary_operator can only be '*' on the LHS of '='
 	;                                     // you have to enforce this during semantic analysis
@@ -855,12 +875,15 @@ postfix_expression
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {
 		if($1->type == "INT" || $1->type == "FLOAT"){
-			$$ = new opsingle("PP", $1);
-	        $$->lvalue = false;
-	        $$->type = $1->type;
+			opsingle * a = new opsingle("PP", $1);
+	        a->lvalue = false;
+	        a->type = ($1)->type;
+            $$ = a;
+            std::cerr<< ($1)->type<<" asdf\n";
 		}
 		else{
 			std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as increment operand \n";
+            exit(0);
 		}
 	}
 	;

@@ -8,7 +8,7 @@ class abstract_astnode
 {
 public:
     virtual void print () = 0;
-    string type;
+    string type = "null";
     bool lvalue;
 // virtual std::string generate_code(const symbolTable&) = 0;
 // virtual basic_types getType() = 0;
