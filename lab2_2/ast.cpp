@@ -299,10 +299,22 @@ void Args :: add_arg(abstract_astnode* a){
 	args.push_back(a);
 }
 
-bool compatible(string a, string b){
-    if(a == b) return true;
-    if(a == "INT" && b == "FLOAT") return true;
-    if(b == "INT" && a == "FLOAT") return true;
+string compatible(string a, string b){
+	string ret;
+    if(a == b){
+		ret = "00" + a;
+		return ret;
+	}
+    if(a == "INT" && b == "FLOAT"){
+		ret ="10FLOAT";
+		// cout<<"here2"<<" "<<ret<<endl;
+		return ret;
+	}
+    if(b == "INT" && a == "FLOAT"){
+		ret = "20FLOAT";
+		return ret;
+
+	}
 	string s1 = a.substr(0,5);
 	string s2 = b.substr(0,5);
 	if(s1 == "array" && s2=="array"){
@@ -316,10 +328,12 @@ bool compatible(string a, string b){
 		s2 = s2.substr(pos);
 		s2 = s2.substr(1,s2.length() - 1);
 		if(s1 == s2){
-			return true;
+			ret = "00" + a;
+			return ret;
 		}
 		else{
-			return false;
+			ret = "NOPE";
+			return ret;
 		}
 	}
 
@@ -343,10 +357,12 @@ bool compatible(string a, string b){
 		}
 
 		if(s1 == s2){
-			return true;
+			ret = "00"+a;
+			return ret;
 		}
 		else{
-			return false;
+			ret = "NOPE";
+			return ret;
 		}
 	}
 
@@ -357,39 +373,68 @@ bool compatible(string a, string b){
 		s1 = a.substr(8,a.length() - 9);
 		s2 = b.substr(8,b.length() - 9);
 
-		if(s1=="VOID" || s2=="VOID"){
-			return true;
+		if(s1=="VOID"){
+			ret = '2' + a;
+			return ret;
+		}
+		else if(s2 == "VOID"){
+			ret = "10" + b;
+			return ret;
 		}
 
-		return compatible(s1,s2);
+		if(compatible(s1,s2) != "NOPE"){
+			string s3 = s1.substr(0,7);
+			string s4 = s2.substr(0,7);
+			if(s3 == "pointer" || s2 == "pointer"){
+				return "NOPE";
+			}
+			s3 = compatible(s1,s2);
+			if(s3[0] == '0'){
+				return "00" + a;
+			}
+			else if(s3[0] == '1'){
+				s3 = s3.substr(2,s3.length() - 2);
+				ret = + "10pointer(" + s3 + ")";
+				return ret;
+			}
+			else{
+				s3 = s3.substr(2,s3.length() - 2);
+				ret = + "20pointer(" + s3 + ")";
+				return ret;
+			}
+		}
 	}
 
 	s1 = a.substr(0,5);
 	s2 = b.substr(0,5);
 
 	if(s1=="point" && s2=="array"){
+		// cout<<"here\n";
 		s1 = a.substr(8,a.length() - 9);
 
 		s2 = b.substr(0,b.length() - 1);
+
 		std::size_t pos = s2.find(",");
 		s2 = s2.substr(pos);
 		s2 = s2.substr(1,s2.length() - 1);
-		return s1==s2;
+		// cout<<s1<<" "<<s2<<endl;
+		if(s1 == s2){
+			ret = "20" + a;
+			return ret;
+		}
 	}
-	s2 = a.substr(0,5);
-	s1 = b.substr(0,5);
-	if(s1=="point" && s2=="array"){
-		s1 = a.substr(7,a.length() - 8);
-		s2 = b.substr(0,b.length() - 1);
-		std::size_t pos = s2.find(",");
-		s2 = s2.substr(pos);
-		s2 = s2.substr(1,s2.length() - 1);
-		return s1==s2;
-	}
+	// s2 = a.substr(0,5);
+	// s1 = b.substr(0,5);
+	// if(s1=="point" && s2=="array"){
+	// 	s1 = a.substr(7,a.length() - 8);
+	// 	s2 = b.substr(0,b.length() - 1);
+	// 	std::size_t pos = s2.find(",");
+	// 	s2 = s2.substr(pos);
+	// 	s2 = s2.substr(1,s2.length() - 1);
+	// 	return s1==s2;
+	// }
 
-
-
-	return false;
+	return "NOPE";
 
 }
 
