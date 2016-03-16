@@ -190,7 +190,7 @@ declarator
     }
     | '*' declarator
     {
-        type_store.push_back("pointer(");
+        type = "pointer(" + type +")";
         curr_size = 4;
     }
     ;
@@ -334,7 +334,6 @@ expression                                   //assignment expressions are right 
         {
             if($1->lvalue){
                 string t = compatible($1->type, $3->type);
-                std::cerr<<$1->type<<"\n";
             	if(t.substr(0,2) == "00"){
             		$$ = new Ass($1,$3);
                 	$$->lvalue = false;
@@ -702,9 +701,27 @@ unary_expression
                 std::cerr<<s<<"\n";
                 $$->type = s;
             }
-            else if(s == "NOPE"){
+            else{
                 std::cerr<<ParserBase::lineNr<<": Error: invalid type argument of unary ‘*’ (have '"<<$2->type<<"’)\n";
                 exit(0);
+            }
+        }
+        else if(((un_operator*)$1)->op_type == "AND"){
+            if($2->lvalue){
+                string s = $2->type;
+                s = "pointer("+s+")";
+                $$ = new opsingle(((un_operator*)$1)->op_type, $2);
+                $$->lvalue = false;
+                $$->type = s;
+            }
+            else{
+                std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as unary ‘&’ operand\n";
+                exit(0);
+            }
+        }
+        else if(((un_operator*)$1)->op_type == "UMINUS"){
+            if($2->type == "INT" || $2->type == "FLOAT"){
+                $$ = new opsingle(((un_operator*)$1)->op_type, $2);
             }
         }
 		//$$ = new opsingle(((un_operator*)$1)->op_type, $2);
