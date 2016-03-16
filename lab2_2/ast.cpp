@@ -423,16 +423,25 @@ string compatible(string a, string b){
 			return ret;
 		}
 	}
-	// s2 = a.substr(0,5);
-	// s1 = b.substr(0,5);
-	// if(s1=="point" && s2=="array"){
-	// 	s1 = a.substr(7,a.length() - 8);
-	// 	s2 = b.substr(0,b.length() - 1);
-	// 	std::size_t pos = s2.find(",");
-	// 	s2 = s2.substr(pos);
-	// 	s2 = s2.substr(1,s2.length() - 1);
-	// 	return s1==s2;
-	// }
+
+	s2 = a.substr(0,5);
+	s1 = b.substr(0,5);
+
+	if(s1=="point" && s2=="array"){
+		// cout<<"here\n";
+		s1 = a.substr(8,a.length() - 9);
+
+		s2 = b.substr(0,b.length() - 1);
+
+		std::size_t pos = s2.find(",");
+		s2 = s2.substr(pos);
+		s2 = s2.substr(1,s2.length() - 1);
+		// cout<<s1<<" "<<s2<<endl;
+		if(s1 == s2){
+			ret = "20" + a;
+			return ret;
+		}
+	}
 
 	return "NOPE";
 
