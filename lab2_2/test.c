@@ -1,18 +1,24 @@
-struct S
-{
+struct s {
     int a;
-    float b;
+    float b[5][5];
 };
-int main()
-{
-    float f1,f2,f3;
-    float fa[3];
-    int ia[3];
-    int i1,i2;
-    struct S x;
 
-    i1 = f1 + f2;
-    f3 = f1 + i2;
-    f1 = i1 + x.a;
-    i1 = fa[0] + ia[5];
+struct t{
+    struct s x[10];
+};
+
+float * f(int * a[10], float b[8][5]) {
+    return b[0];
+}
+
+int main() {
+    float a[10][10];
+    int b[10][10];
+    int * c[5];
+    struct s x;
+    struct t y;
+    int i;
+    f(c, x.b);
+    f(c, a);
+    y.x[i].b[2] = x.b[1]; 
 }

@@ -418,30 +418,44 @@ string compatible(string a, string b){
 		s2 = s2.substr(pos);
 		s2 = s2.substr(1,s2.length() - 1);
 		// cout<<s1<<" "<<s2<<endl;
-		if(s1 == s2){
-			ret = "20" + a;
-			return ret;
+		if(compatible(s1,s2) != "NOPE"){
+			string s3 = compatible(s1,s2);
+			if(s3[0] == '0'){
+				return "00" + a;
+			}
+			else if(s3[0] == '1'){
+				s3 = s3.substr(2,s3.length() - 2);
+				ret = + "10pointer(" + s3 + ")";
+				return ret;
+			}
+			else{
+				s3 = s3.substr(2,s3.length() - 2);
+				ret = + "20pointer(" + s3 + ")";
+				return ret;
+			}
 		}
+
 	}
 
-	s2 = a.substr(0,5);
-	s1 = b.substr(0,5);
-
-	if(s1=="point" && s2=="array"){
-		// cout<<"here\n";
-		s1 = a.substr(8,a.length() - 9);
-
-		s2 = b.substr(0,b.length() - 1);
-
-		std::size_t pos = s2.find(",");
-		s2 = s2.substr(pos);
-		s2 = s2.substr(1,s2.length() - 1);
-		// cout<<s1<<" "<<s2<<endl;
-		if(s1 == s2){
-			ret = "20" + a;
-			return ret;
-		}
-	}
+	// s1 = a.substr(0,5);
+	// s2 = b.substr(0,5);
+	//
+	// if(s1=="array" && s2=="pointer"){
+	// 	// cout<<"here\n";
+	// 	s2 = b.substr(8,b.length() - 9);
+	//
+	// 	s1 = a.substr(0,a.length() - 1);
+	//
+	// 	std::size_t pos = s1.find(",");
+	// 	s1 = s1.substr(pos);
+	// 	s1 = s1.substr(1,s1.length() - 1);
+	// 	// cout<<s1<<" "<<s2<<endl;
+	// 	string s3 = compatible(s1,s2);
+	// 	if(s3.substr(0,2) == ){
+	// 		ret = "00" + a;
+	// 		return ret;
+	// 	}
+	// }
 
 	return "NOPE";
 
