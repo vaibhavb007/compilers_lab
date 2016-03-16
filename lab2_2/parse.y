@@ -90,19 +90,6 @@ type_specifier                   // This is the information
 		}
         | STRUCT IDENTIFIER
         {
-        	bool flag = false;
-            for(int i=0; i<gst.size(); i++){
-                if(!gst[i].gl && gst[i].symbol_name == $2){
-                    flag = true;
-                    type_size = gst[i].size;
-                    curr_size = type_size;
-                    break;
-                }
-            }
-            if(!flag){
-                std::cerr<<ParserBase::lineNr<<": Error:The struct "<<$2<<" is not defined\n";
-                exit(0);
-            }
             type = "STRUCT " + $2;
             old_type = type;
         }
@@ -155,25 +142,23 @@ parameter_list
 parameter_declaration
 	: type_specifier declarator
     {
-
         size += curr_size;
+        type = compute_type(type_store, type);
         fun_entry a (name, 0, type, curr_size, size);
         current->addEntry(a);
         type = old_type;
         curr_size = type_size;
+        type_store.resize(0);
     }
     ;
 
 declarator
 	: IDENTIFIER
 	{
-        if($1 == "VOID"){
-            std::cerr<<ParserBase::lineNr<<": Error: declaration with VOID type\n";
-            exit(0);
-        }
         bool flag = true;
             for(int i=0; i<current->local_table.size(); i++){
                 if(current->local_table[i].symbol_name == $1){
+                    current->local_table[i].print();
                     flag = false;
                     break;
                 }
@@ -307,10 +292,6 @@ statement
         }
         | RETURN expression ';'
         {
-            if(fun_type == "VOID"){
-                std::cerr<<ParserBase::lineNr<<": VOID function returning something.\n";
-                exit(0);
-            }
         	string t = compatible(fun_type, $2->type);
             if(t == "NOPE"){
                 std::cerr<<ParserBase::lineNr<<": Error: incompatible type for return\n";
@@ -412,68 +393,6 @@ expression                                   //assignment expressions are right 
             		$$ = new Ass($1,$3);
                 	$$->lvalue = false;
             	}
-                else if(t == "NOPE"){
-                    std::cerr<<ParserBase::lineNr<<": Error: incompatible type for "<<$1<<"’\n";
-                    std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<$1->type<<"' but argument is of type '"<<$3->type<<"'\n";
-                    exit(0);
-                }
-                else if(t.substr(0,2)=="20"){
-                    string s = t.substr(2,t.length() - 2);
-                    s = "TO-" + s;
-                    opsingle*a = new opsingle(s, $3);
-                    string type = $3->type;
-                    bool lvalue = $3->lvalue;
-                    $3 = a;
-                    $3->type = type;
-                    $3->lvalue = lvalue;
-                }
-                else if(t.substr(0,2)=="10"){
-                    t  = t.substr(2,t.length() -2);
-                    string s = t.substr(0,5);
-                    if(s == "array"){
-                        s = t;
-                        s = "TO-" + s;
-                        opsingle*a = new opsingle(s, $3);
-                        string type = ($3)->type;
-                        bool lvalue = ($3)->lvalue;
-                        $3 = a;
-                        ($3)->type = type;
-                        ($3)->lvalue = lvalue;
-                    }
-                    s = t.substr(0,3);
-                    if(s == "INT" && t == "FLOAT"){
-                        opsingle*a = new opsingle("TO-INT", $3);
-                        string type = ($3)->type;
-                        bool lvalue = ($3)->lvalue;
-                        $3 = a;
-                        ($3)->type = type;
-                        ($3)->lvalue = lvalue;
-                    }
-                    s = t.substr(0,7);
-                    if(s == "pointer"){
-                        if(($3)->type.substr(0,5) == "array"){
-                            s = t;
-                            s = "TO-" + s;
-                            opsingle*a = new opsingle(s, $3);
-                            string type = ($3)->type;
-                            bool lvalue = ($3)->lvalue;
-                            $3 = a;
-                            ($3)->type = type;
-                            ($3)->lvalue = lvalue;
-                        }
-                        if(($3)->type.substr(0,5) == "point"){
-                            s = "TO-" + t;
-                            opsingle*a = new opsingle(s, $3);
-                            string type = ($3)->type;
-                            bool lvalue = ($3)->lvalue;
-                            $3 = a;
-                            ($3)->type = type;
-                            ($3)->lvalue = lvalue;
-                        }
-                    }
-                }
-
-
             	else{
             		std::cerr<<ParserBase::lineNr<<": Error: incompatible types when assigning to type '"<<$1->type<<"' from type '"<<$3->type<<"'\n";
             		exit(0);
@@ -834,7 +753,6 @@ unary_expression
                 $$->lvalue = true;
                 string s = $2->type;
                 s = s.substr(8, s.length()-9);
-                std::cerr<<s<<"\n";
                 $$->type = s;
             }
             else{
@@ -895,12 +813,13 @@ postfix_expression
         for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
             	flag = true;
-                for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
+                for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
                 	if(!(gst[i].symtab)->local_table[j].isparam){
                 		count++;
                 	}
                 }
                 s = gst[i].ret_type;
+                break;
             }
         }
         if(!count && flag){
@@ -915,7 +834,7 @@ postfix_expression
         		exit(0);
         	}
         	else{
-        		std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+        		std::cerr<<ParserBase::lineNr<<": Error: too few arguments to function '"<<$1<<"' \n";
 	        	exit(0);
         	}
         }
@@ -939,10 +858,8 @@ postfix_expression
         }
         if(flag){
         	if(countargs == actualargs){
-        		std::cerr<<"hello\n";
         		bool sign = true;
 	        	for(int i=0; i<countargs; i++){
-	        		std::cerr<<curr->local_table[i].type<<" "<<(((Args*)$3)->args[i])->type<<"\n";
                     string t = compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type);
                     if(t == "NOPE"){
 	        			sign = false;
@@ -1048,8 +965,9 @@ postfix_expression
             s = s.substr(pos);
             s = s.substr(1,s.length() - 1);
             $$ = new ArrayRef($1,$3);
-            $$->lvalue = true;
             $$->type = s;
+            if(s.substr(0,5) == "array") $$->lvalue = false;
+            $$->lvalue = true;
         }
         else{
             std::cerr<<ParserBase::lineNr<<": Error: array subscript is not an integer\n";
@@ -1120,12 +1038,11 @@ postfix_expression
     }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {
-		if($1->type == "INT" || $1->type == "FLOAT"){
+		if($1->lvalue){
 			opsingle * a = new opsingle("PP", $1);
 	        a->lvalue = false;
 	        a->type = ($1)->type;
             $$ = a;
-            std::cerr<< ($1)->type<<" asdf\n";
 		}
 		else{
 			std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as increment operand \n";
@@ -1144,7 +1061,7 @@ expression_list
     | expression_list ',' expression
     {
     	((Args*)$1)->add_arg($3);
-    	$$ = $3;
+    	$$ = $1;
     }
 	;
 
@@ -1196,7 +1113,25 @@ declarator_list
 	: declarator
     {
         size += curr_size;
-        type = compute_type(type_store, old_type);
+        if(type.substr(0, 6) != "pointer"){
+            if(type.substr(0,6) == "STRUCT"){
+                bool flag = false;
+                string s = type.substr(7, type.size()-7);
+                for(int i=0; i<gst.size()-1; i++){
+                    if(!gst[i].gl && gst[i].symbol_name == s){
+                        flag = true;
+                        type_size = gst[i].size;
+                        curr_size = type_size;
+                        break;
+                    }
+                }
+                if(!flag){
+                    std::cerr<<ParserBase::lineNr<<": Error:The struct "<<s<<" is not defined\n";
+                    exit(0);
+                }
+            }
+        }
+        type = compute_type(type_store, type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);
@@ -1218,7 +1153,25 @@ declarator_list
 	| declarator_list ',' declarator
     {
         size += curr_size;
-        type = compute_type(type_store, old_type);
+        if(type.substr(0, 6) != "pointer"){
+            if(type.substr(0,6) == "STRUCT"){
+                bool flag = false;
+                string s = type.substr(7, type.size()-7);
+                for(int i=0; i<gst.size()-1; i++){
+                    if(!gst[i].gl && gst[i].symbol_name == s){
+                        flag = true;
+                        type_size = gst[i].size;
+                        curr_size = type_size;
+                        break;
+                    }
+                }
+                if(!flag){
+                    std::cerr<<ParserBase::lineNr<<": Error:The struct "<<s<<" is not defined\n";
+                    exit(0);
+                }
+            }
+        }
+        type = compute_type(type_store, type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);
