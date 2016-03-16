@@ -303,7 +303,8 @@ statement
         }
         | RETURN expression ';'
         {
-        	if(compatible(fun_type, $2->type)){
+        	string t = compatible(fun_type, $2->type);
+            if(t.substr(0,2) == "00"){
         		$$ = new Return($2);
         	}
         	else{
@@ -332,7 +333,9 @@ expression                                   //assignment expressions are right 
         |  unary_expression '=' expression   // l_expression has been replaced by unary_expression.
         {
             if($1->lvalue){
-            	if(compatible($1->type, $3->type)){
+                string t = compatible($1->type, $3->type);
+                std::cerr<<$1->type<<"\n";
+            	if(t.substr(0,2) == "00"){
             		$$ = new Ass($1,$3);
                 	$$->lvalue = false;
             	}
@@ -678,11 +681,7 @@ unary_expression
     {
         if(((un_operator*)$1)->op_type == "STAR"){
             string s = $2->type;
-            if(s.substr(0,3) == "INT" || s.substr(0,5) == "FLOAT"){
-                std::cerr<<ParserBase::lineNr<<": Error: invalid type argument of unary ‘*’ (have '"<<$2->type<<"’)\n";
-                exit(0);
-            }
-            else if(s.substr(0,4) == "VOID"){
+            if(s.substr(0,4) == "VOID"){
                 std::cerr<<ParserBase::lineNr<<": Error: dereferencing ‘void *’ pointer\n";
                 exit(0);
             }
@@ -694,6 +693,18 @@ unary_expression
                 s = s.substr(pos);
                 s = s.substr(1,s.length() - 1);
                 $$->type = s;
+            }
+            else if(s.substr(0,7) == "pointer"){
+                $$ = new opsingle(((un_operator*)$1)->op_type, $2);
+                $$->lvalue = true;
+                string s = $2->type;
+                s = s.substr(8, s.length()-9);
+                std::cerr<<s<<"\n";
+                $$->type = s;
+            }
+            else if(s == "NOPE"){
+                std::cerr<<ParserBase::lineNr<<": Error: invalid type argument of unary ‘*’ (have '"<<$2->type<<"’)\n";
+                exit(0);
             }
         }
 		//$$ = new opsingle(((un_operator*)$1)->op_type, $2);
@@ -762,7 +773,8 @@ postfix_expression
         		bool sign = true;
 	        	for(int i=0; i<countargs; i++){
 	        		std::cerr<<curr->local_table[i].type<<" "<<(((Args*)$3)->args[i])->type<<"\n";
-	        		if(!compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type)){
+                    string t = compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type);
+                    if(! (t.substr(0,2) == "00")){
 	        			sign = false;
 	        			std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
 	        			std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";

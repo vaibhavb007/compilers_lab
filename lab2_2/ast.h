@@ -237,7 +237,7 @@ public:
     void print();
 };
 
-bool compatible(string a, string b);
+string compatible(string a, string b);
 
 string compute_type(vector<string> a, string b);
 
