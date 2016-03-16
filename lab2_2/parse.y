@@ -293,13 +293,79 @@ statement
         | RETURN expression ';'
         {
         	string t = compatible(fun_type, $2->type);
-            if(t.substr(0,2) == "00"){
-        		$$ = new Return($2);
-        	}
-        	else{
-        		std::cerr<<ParserBase::lineNr<<": Error: incompatible types when returning type '"<<$2->type<<"' but '"<<fun_type<<"' was expected\n";
-        		exit(0);
-        	}
+            if(t == "NOPE"){
+                std::cerr<<ParserBase::lineNr<<": Error: incompatible type for return\n";
+                std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<fun_type<<"' but argument is of type '"<<($2)->type<<"'\n";
+                exit(0);
+            }
+            else if(t.substr(0,2)=="00"){
+                $$ = new Return($2);
+            }
+            else if(t.substr(0,2)=="20"){
+                string s = t.substr(2,t.length() - 2);
+                s = "TO-" + s;
+                opsingle*a = new opsingle(s, $2);
+                string type = ($2)->type;
+                bool lvalue = ($2)->lvalue;
+                $2 = a;
+                ($2)->type = type;
+                ($2)->lvalue = lvalue;
+                $$ = new Return($2);
+            }
+            else if(t.substr(0,2)=="10"){
+                t  = t.substr(2,t.length() -2);
+                string s = t.substr(0,5);
+                if(s == "array"){
+                    s = t;
+                    s = "TO-" + s;
+                    opsingle*a = new opsingle(s, $2);
+                    string type = ($2)->type;
+                    bool lvalue = ($2)->lvalue;
+                    $2 = a;
+                    ($2)->type = type;
+                    ($2)->lvalue = lvalue;
+                    $$ = new Return($2);
+                }
+                s = t.substr(0,3);
+                if(s == "INT" && t == "FLOAT"){
+                    opsingle*a = new opsingle("TO-INT", $2);
+                    string type = ($2)->type;
+                    bool lvalue = ($2)->lvalue;
+                    $2 = a;
+                    ($2)->type = type;
+                    ($2)->lvalue = lvalue;
+                    $$ = new Return($2);
+                }
+                s = t.substr(0,7);
+                if(s == "pointer"){
+                    if(($2)->type.substr(0,5) == "array"){
+                        s = t;
+                        s = "TO-" + s;
+                        opsingle*a = new opsingle(s, $2);
+                        string type = ($2)->type;
+                        bool lvalue = ($2)->lvalue;
+                        $2 = a;
+                        ($2)->type = type;
+                        ($2)->lvalue = lvalue;
+                        $$ = new Return($2);
+                    }
+                    if(($2)->type.substr(0,5) == "point"){
+                        s = "TO-" + t;
+                        opsingle*a = new opsingle(s, $2);
+                        string type = ($2)->type;
+                        bool lvalue = ($2)->lvalue;
+                        $2 = a;
+                        ($2)->type = type;
+                        ($2)->lvalue = lvalue;
+                        $$ = new Return($2);
+                    }
+                }
+            }
+            else{
+                std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument return\n";
+                std::cerr<<ParserBase::lineNr<<": Note: expected '"<<fun_type<<"' but argument is of type '"<<($2)->type<<"'\n";
+                exit(0);
+            }
         }
         ;
 
@@ -801,6 +867,9 @@ postfix_expression
 	        			std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
 	        			exit(0);
 	        		}
+                    else if(t.substr(0,2)=="00"){
+
+                    }
                     else if(t.substr(0,2)=="20"){
                         string s = t.substr(2,t.length() - 2);
                         s = "TO-" + s;
@@ -856,6 +925,12 @@ postfix_expression
                             }
                         }
                     }
+                    else{
+                        sign = false;
+	        			std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
+	        			std::cerr<<ParserBase::lineNr<<": Note: expected '"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
+	        			exit(0);
+                    }
 	        	}
 	        	if(sign){
 	        		Identifier*a = new Identifier($1);
@@ -890,8 +965,9 @@ postfix_expression
             s = s.substr(pos);
             s = s.substr(1,s.length() - 1);
             $$ = new ArrayRef($1,$3);
-            $$->lvalue = true;
             $$->type = s;
+            if(s.substr(0,5) == "array") $$->lvalue = false;
+            $$->lvalue = true;
         }
         else{
             std::cerr<<ParserBase::lineNr<<": Error: array subscript is not an integer\n";
