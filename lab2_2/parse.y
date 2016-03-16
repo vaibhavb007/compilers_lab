@@ -819,7 +819,7 @@ postfix_expression
                         s = "TO-" + s;
                         opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                         string type = (((Args*)$3)->args[i])->type;
-                        string lvalue = (((Args*)$3)->args[i])->lvalue;
+                        bool lvalue = (((Args*)$3)->args[i])->lvalue;
                         ((Args*)$3)->args[i] = a;
                         (((Args*)$3)->args[i])->type = type;
                         (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -832,7 +832,7 @@ postfix_expression
                             s = "TO-" + s;
                             opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
-                            string lvalue = (((Args*)$3)->args[i])->lvalue;
+                            bool lvalue = (((Args*)$3)->args[i])->lvalue;
                             ((Args*)$3)->args[i] = a;
                             (((Args*)$3)->args[i])->type = type;
                             (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -841,7 +841,7 @@ postfix_expression
                         if(s == "INT" && t == "FLOAT"){
                             opsingle*a = new opsingle("TO-INT", ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
-                            string lvalue = (((Args*)$3)->args[i])->lvalue;
+                            bool lvalue = (((Args*)$3)->args[i])->lvalue;
                             ((Args*)$3)->args[i] = a;
                             (((Args*)$3)->args[i])->type = type;
                             (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -853,7 +853,7 @@ postfix_expression
                                 s = "TO-" + s;
                                 opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                                 string type = (((Args*)$3)->args[i])->type;
-                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
                                 ((Args*)$3)->args[i] = a;
                                 (((Args*)$3)->args[i])->type = type;
                                 (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -862,7 +862,7 @@ postfix_expression
                                 s = "TO-" + t;
                                 opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                                 string type = (((Args*)$3)->args[i])->type;
-                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
                                 ((Args*)$3)->args[i] = a;
                                 (((Args*)$3)->args[i])->type = type;
                                 (((Args*)$3)->args[i])->lvalue = lvalue;
