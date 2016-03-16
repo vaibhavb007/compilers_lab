@@ -1,4 +1,4 @@
-*assignment modify
-*cannot declare variable of void
+*assignment modify [Done some modifications, but not necessarily correct]
+[done]cannot declare variable of void
 [done]making lvalue of arrays false so as to avoid assignment of arrays
-*do not return if function is of type void
+[done]do not return if function is of type void
