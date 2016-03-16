@@ -90,19 +90,6 @@ type_specifier                   // This is the information
 		}
         | STRUCT IDENTIFIER
         {
-        	bool flag = false;
-            for(int i=0; i<gst.size(); i++){
-                if(!gst[i].gl && gst[i].symbol_name == $2){
-                    flag = true;
-                    type_size = gst[i].size;
-                    curr_size = type_size;
-                    break;
-                }
-            }
-            if(!flag){
-                std::cerr<<ParserBase::lineNr<<": Error:The struct "<<$2<<" is not defined\n";
-                exit(0);
-            }
             type = "STRUCT " + $2;
             old_type = type;
         }
@@ -155,12 +142,13 @@ parameter_list
 parameter_declaration
 	: type_specifier declarator
     {
-
         size += curr_size;
+        type = compute_type(type_store, type);
         fun_entry a (name, 0, type, curr_size, size);
         current->addEntry(a);
         type = old_type;
         curr_size = type_size;
+        type_store.resize(0);
     }
     ;
 
@@ -170,6 +158,7 @@ declarator
         bool flag = true;
             for(int i=0; i<current->local_table.size(); i++){
                 if(current->local_table[i].symbol_name == $1){
+                    current->local_table[i].print();
                     flag = false;
                     break;
                 }
@@ -698,7 +687,6 @@ unary_expression
                 $$->lvalue = true;
                 string s = $2->type;
                 s = s.substr(8, s.length()-9);
-                std::cerr<<s<<"\n";
                 $$->type = s;
             }
             else{
@@ -759,12 +747,13 @@ postfix_expression
         for(int i=0; i<gst.size(); i++){
             if(gst[i].gl && gst[i].symbol_name == $1){
             	flag = true;
-                for(int j=0; j<(gst[i].symtab)->local_table.size(); i++){
+                for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
                 	if(!(gst[i].symtab)->local_table[j].isparam){
                 		count++;
                 	}
                 }
                 s = gst[i].ret_type;
+                break;
             }
         }
         if(!count && flag){
@@ -779,7 +768,7 @@ postfix_expression
         		exit(0);
         	}
         	else{
-        		std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+        		std::cerr<<ParserBase::lineNr<<": Error: too few arguments to function '"<<$1<<"' \n";
 	        	exit(0);
         	}
         }
@@ -803,10 +792,8 @@ postfix_expression
         }
         if(flag){
         	if(countargs == actualargs){
-        		std::cerr<<"hello\n";
         		bool sign = true;
 	        	for(int i=0; i<countargs; i++){
-	        		std::cerr<<curr->local_table[i].type<<" "<<(((Args*)$3)->args[i])->type<<"\n";
                     string t = compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type);
                     if(t == "NOPE"){
 	        			sign = false;
@@ -819,7 +806,7 @@ postfix_expression
                         s = "TO-" + s;
                         opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                         string type = (((Args*)$3)->args[i])->type;
-                        string lvalue = (((Args*)$3)->args[i])->lvalue;
+                        bool lvalue = (((Args*)$3)->args[i])->lvalue;
                         ((Args*)$3)->args[i] = a;
                         (((Args*)$3)->args[i])->type = type;
                         (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -832,7 +819,7 @@ postfix_expression
                             s = "TO-" + s;
                             opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
-                            string lvalue = (((Args*)$3)->args[i])->lvalue;
+                            bool lvalue = (((Args*)$3)->args[i])->lvalue;
                             ((Args*)$3)->args[i] = a;
                             (((Args*)$3)->args[i])->type = type;
                             (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -841,7 +828,7 @@ postfix_expression
                         if(s == "INT" && t == "FLOAT"){
                             opsingle*a = new opsingle("TO-INT", ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
-                            string lvalue = (((Args*)$3)->args[i])->lvalue;
+                            bool lvalue = (((Args*)$3)->args[i])->lvalue;
                             ((Args*)$3)->args[i] = a;
                             (((Args*)$3)->args[i])->type = type;
                             (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -853,7 +840,7 @@ postfix_expression
                                 s = "TO-" + s;
                                 opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                                 string type = (((Args*)$3)->args[i])->type;
-                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
                                 ((Args*)$3)->args[i] = a;
                                 (((Args*)$3)->args[i])->type = type;
                                 (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -862,7 +849,7 @@ postfix_expression
                                 s = "TO-" + t;
                                 opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                                 string type = (((Args*)$3)->args[i])->type;
-                                string lvalue = (((Args*)$3)->args[i])->lvalue;
+                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
                                 ((Args*)$3)->args[i] = a;
                                 (((Args*)$3)->args[i])->type = type;
                                 (((Args*)$3)->args[i])->lvalue = lvalue;
@@ -975,12 +962,11 @@ postfix_expression
     }
     | postfix_expression INC_OP 	       // Cannot appear on the LHS of '='   Enforce this
     {
-		if($1->type == "INT" || $1->type == "FLOAT"){
+		if($1->lvalue){
 			opsingle * a = new opsingle("PP", $1);
 	        a->lvalue = false;
 	        a->type = ($1)->type;
             $$ = a;
-            std::cerr<< ($1)->type<<" asdf\n";
 		}
 		else{
 			std::cerr<<ParserBase::lineNr<<": Error:  lvalue required as increment operand \n";
@@ -999,7 +985,7 @@ expression_list
     | expression_list ',' expression
     {
     	((Args*)$1)->add_arg($3);
-    	$$ = $3;
+    	$$ = $1;
     }
 	;
 
@@ -1051,7 +1037,25 @@ declarator_list
 	: declarator
     {
         size += curr_size;
-        type = compute_type(type_store, old_type);
+        if(type.substr(0, 6) != "pointer"){
+            if(type.substr(0,6) == "STRUCT"){
+                bool flag = false;
+                string s = type.substr(7, type.size()-7);
+                for(int i=0; i<gst.size()-1; i++){
+                    if(!gst[i].gl && gst[i].symbol_name == s){
+                        flag = true;
+                        type_size = gst[i].size;
+                        curr_size = type_size;
+                        break;
+                    }
+                }
+                if(!flag){
+                    std::cerr<<ParserBase::lineNr<<": Error:The struct "<<s<<" is not defined\n";
+                    exit(0);
+                }
+            }
+        }
+        type = compute_type(type_store, type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);
@@ -1073,7 +1077,25 @@ declarator_list
 	| declarator_list ',' declarator
     {
         size += curr_size;
-        type = compute_type(type_store, old_type);
+        if(type.substr(0, 6) != "pointer"){
+            if(type.substr(0,6) == "STRUCT"){
+                bool flag = false;
+                string s = type.substr(7, type.size()-7);
+                for(int i=0; i<gst.size()-1; i++){
+                    if(!gst[i].gl && gst[i].symbol_name == s){
+                        flag = true;
+                        type_size = gst[i].size;
+                        curr_size = type_size;
+                        break;
+                    }
+                }
+                if(!flag){
+                    std::cerr<<ParserBase::lineNr<<": Error:The struct "<<s<<" is not defined\n";
+                    exit(0);
+                }
+            }
+        }
+        type = compute_type(type_store, type);
         if(isstruct){
             fun_entry a (name, 1, type, curr_size, -size);
             current->addEntry(a);

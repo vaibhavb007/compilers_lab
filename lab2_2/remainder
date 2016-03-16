@@ -1,3 +1,4 @@
-unary_expression
-
-Test case 4 -> syntax error
+*assignment modify
+*cannot declare variable of void
+making lvalue of arrays false so as to avoid assignment of arrays
+*do not return if function is of type void

@@ -1,4 +1,6 @@
-int main(){
-    int i,*j;
-    i = -j;
+int main()
+{
+  int i;
+  int j;
+  (i+j)++;
 }
