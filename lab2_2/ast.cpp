@@ -66,9 +66,8 @@ void Seq :: add_node(abstract_astnode* a){
 
 void Seq :: print(){
 	cout<<"(Block [";
-	stmtlist[0]->print();
 	cerr<<"printed\n";
-	for(int i=1; i<stmtlist.size(); i++){
+	for(int i=0; i<stmtlist.size(); i++){
 		cout<<endl;
 		stmtlist[i]->print();
 	}
@@ -88,8 +87,7 @@ void fncall :: print(){
 	cout<<"(fncall";
 	// cout<<
 	cout<<"(Block [";
-	exprList[0]->print();
-	for(int i=1; i<exprList.size(); i++){
+	for(int i=0; i<exprList.size(); i++){
 		cout<<endl;
 		exprList[i]->print();
 	}
@@ -474,7 +472,7 @@ funTable* current;
 string type, old_type, fun_type;
 bool isstruct; //if we are in struct or in a function
 bool islocal;	//inside a function, if we are in a arguments or not
-int size, last_offset, type_size, curr_size;
+int size, last_offset, type_size, curr_size, fun_local=0;
 //size->cumulative sum of variables used uptil now
 //type_size-> size of int/float/..
 //curr_size-> updated size of current variable

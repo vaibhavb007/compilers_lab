@@ -200,6 +200,7 @@ primary_expression              // The smallest expressions, need not have a l_v
                     flag = true;
                     $$->type = current->local_table[i].type;
                     $$->lvalue = true;
+                    if(current->local_table[i].isparam) fun_local++;
                     break;
                 }
             }
@@ -294,31 +295,39 @@ statement
         {
             $$ = $1;
         }
-        | RETURN expression ';'
+        | RETURN 
+        {
+            fun_local = 0;
+        }
+        expression ';'
         {
             if(fun_type == "VOID"){
-                std::cerr<<ParserBase::lineNr<<": ‘return’ with a value, in function returning void.\n";
+                std::cerr<<ParserBase::lineNr<<": Error: ‘return’ with a value, in function returning void.\n";
                 exit(0);
             }
-            string t = compatible(fun_type, $2->type);
+            if(fun_local ==2){
+                std::cerr<<ParserBase::lineNr<<": Error: function returns address of local variable\n";
+                exit(0);
+            }
+            string t = compatible(fun_type, $3->type);
             if(t == "NOPE"){
                 std::cerr<<ParserBase::lineNr<<": Error: incompatible type for return\n";
-                std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<fun_type<<"' but argument is of type '"<<($2)->type<<"'\n";
+                std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<fun_type<<"' but argument is of type '"<<($3)->type<<"'\n";
                 exit(0);
             }
             else if(t.substr(0,2)=="00"){
-                $$ = new Return($2);
+                $$ = new Return($3);
             }
             else if(t.substr(0,2)=="20"){
                 string s = t.substr(2,t.length() - 2);
                 s = "TO-" + s;
-                opsingle*a = new opsingle(s, $2);
-                string type = ($2)->type;
-                bool lvalue = ($2)->lvalue;
-                $2 = a;
-                ($2)->type = type;
-                ($2)->lvalue = lvalue;
-                $$ = new Return($2);
+                opsingle*a = new opsingle(s, $3);
+                string type = ($3)->type;
+                bool lvalue = ($3)->lvalue;
+                $3 = a;
+                ($3)->type = type;
+                ($3)->lvalue = lvalue;
+                $$ = new Return($3);
             }
             else if(t.substr(0,2)=="10"){
                 t  = t.substr(2,t.length() -2);
@@ -326,52 +335,52 @@ statement
                 if(s == "array"){
                     // s = t;
                     // s = "TO-" + t;
-                    // opsingle*a = new opsingle(s, $2);
-                    string type = ($2)->type;
-                    bool lvalue = ($2)->lvalue;
-                    // $2 = a;
-                    ($2)->type = type;
-                    ($2)->lvalue = lvalue;
-                    $$ = new Return($2);
+                    // opsingle*a = new opsingle(s, $3);
+                    string type = ($3)->type;
+                    bool lvalue = ($3)->lvalue;
+                    // $3 = a;
+                    ($3)->type = type;
+                    ($3)->lvalue = lvalue;
+                    $$ = new Return($3);
                 }
                 s = t.substr(0,3);
                 if(fun_type == "INT" && t == "FLOAT"){
-                    opsingle*a = new opsingle("TO-INT", $2);
-                    string type = ($2)->type;
-                    bool lvalue = ($2)->lvalue;
-                    $2 = a;
-                    ($2)->type = type;
-                    ($2)->lvalue = lvalue;
-                    $$ = new Return($2);
+                    opsingle*a = new opsingle("TO-INT", $3);
+                    string type = ($3)->type;
+                    bool lvalue = ($3)->lvalue;
+                    $3 = a;
+                    ($3)->type = type;
+                    ($3)->lvalue = lvalue;
+                    $$ = new Return($3);
                 }
                 s = t.substr(0,7);
                 if(s == "pointer"){
-                    if(($2)->type.substr(0,5) == "array"){
+                    if(($3)->type.substr(0,5) == "array"){
                         s = t;
                         s = "TO-" + s;
-                        opsingle*a = new opsingle(s, $2);
-                        string type = ($2)->type;
-                        bool lvalue = ($2)->lvalue;
-                        $2 = a;
-                        ($2)->type = type;
-                        ($2)->lvalue = lvalue;
-                        $$ = new Return($2);
+                        opsingle*a = new opsingle(s, $3);
+                        string type = ($3)->type;
+                        bool lvalue = ($3)->lvalue;
+                        $3 = a;
+                        ($3)->type = type;
+                        ($3)->lvalue = lvalue;
+                        $$ = new Return($3);
                     }
-                    if(($2)->type.substr(0,5) == "point"){
+                    if(($3)->type.substr(0,5) == "point"){
                         s = "TO-" + t;
-                        opsingle*a = new opsingle(s, $2);
-                        string type = ($2)->type;
-                        bool lvalue = ($2)->lvalue;
-                        $2 = a;
-                        ($2)->type = type;
-                        ($2)->lvalue = lvalue;
-                        $$ = new Return($2);
+                        opsingle*a = new opsingle(s, $3);
+                        string type = ($3)->type;
+                        bool lvalue = ($3)->lvalue;
+                        $3 = a;
+                        ($3)->type = type;
+                        ($3)->lvalue = lvalue;
+                        $$ = new Return($3);
                     }
                 }
             }
             else{
                 std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument return\n";
-                std::cerr<<ParserBase::lineNr<<": Note: expected '"<<fun_type<<"' but argument is of type '"<<($2)->type<<"'\n";
+                std::cerr<<ParserBase::lineNr<<": Note: expected '"<<fun_type<<"' but argument is of type '"<<($3)->type<<"'\n";
                 exit(0);
             }
         }
@@ -858,6 +867,7 @@ unary_expression
                 $$ = new opsingle(((un_operator*)$1)->op_type, $2);
                 $$->lvalue = false;
                 $$->type = s;
+                fun_local++;
             }
             else{
                 std::cerr<<ParserBase::lineNr<<": Error: lvalue required as unary ‘&’ operand\n";
