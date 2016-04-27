@@ -1,4 +1,4 @@
-ofstream code ("test.s", ofstream::out);
+ofstream code ("gen.s", ofstream::out);
 global_entry :: global_entry(bool a, string b, string c, funTable*d){
 	gl = a;
 	symbol_name = b;
@@ -108,9 +108,9 @@ void Ass :: print(){
 	cout<<")";
 }
 
-void Ass :: gencode(vector<global_entry> gst, funTable* current){
-	a->gencode(vector<global_entry> gst, funTable* current);
-	b->gencode(vector<global_entry> gst, funTable* current);
+void Ass :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
+	a->gencode(gst, current, true);
+	b->gencode(gst, current, false);
 	code<<"addi $sp, $sp, 8\n";
 	code<<"sw $s0, 8($sp)\n";
 	code<<"sw $s1, 4($sp)\n";
@@ -188,6 +188,85 @@ void opdual :: print(){
 	cout<<")";
 }
 
+void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
+	op1->gencode(gst, current, false);
+	op2->gencode(gst, current, false);
+	//Not finalised code yet. Nothing assumed to be correct.
+	if(type == "PLUS-INT"){
+
+	}
+	else if(type == "PLUS-FLOAT"){
+
+	}
+	else if(type == "MINUS-INT"){
+
+	}
+	else if(type == "MINUS-FLOAT"){
+
+	}
+	else if(type == "MULT-INT"){
+
+	}
+	else if(type == "MULT-FLOAT"){
+
+	}
+	else if(type == "DIV-INT"){
+
+	}
+	else if(type == "DIV-FLOAT"){
+
+	}
+	else if(type == "LT-INT"){
+
+	}
+	else if(type == "LT-FLOAT"){
+
+	}
+	else if(type == "GT-INT"){
+
+	}
+	else if(type == "GT-FLOAT"){
+
+	}
+	else if(type == "LT-INT"){
+
+	}
+	else if(type == "LT-FLOAT"){
+
+	}
+	else if(type == "GT-INT"){
+
+	}
+	else if(type == "GT-FLOAT"){
+
+	}
+	else if(type == "LE_OP-INT"){
+
+	}
+	else if(type == "LE_OP-FLOAT"){
+
+	}
+	else if(type == "GE_OP-INT"){
+
+	}
+	else if(type == "GE_OP-FLOAT"){
+
+	}
+	else if(type == "OR_OP"){
+
+	}
+	else if(type == "AND_OP"){
+
+	}
+	else if(type == "EQ_OP"){
+
+	}
+	else if(type == "NE_OP"){
+
+	}
+
+}
+
 opsingle :: opsingle(string type, abstract_astnode* a){
 	op = a;
 	optype = type;
@@ -231,6 +310,53 @@ Identifier :: Identifier(string a){
 
 void Identifier :: print(){
 	cout<<"(Identifier "<<id<<")";
+}
+
+void Identifier :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
+	if(islhs = true){
+		bool inside = false;
+		int i=0;
+		while(true){
+			if(i> current->local_table.size()) break;
+			if(current->local_table[i].symbol_name == Identifier.id){
+				inside = true;
+				break;
+			}
+			i++;
+		}
+
+		if(inside == true){
+			code<<"addi $s1,$fp,"<<current->local_table[i].offset<<endl;
+			code<<"addi $sp,$sp,-4"<<endl;
+			code<<"sw $s1,0($sp)";
+		}
+		else{
+			int i=0;
+			int offset=0;
+			while(true){
+				if(i> gst.size()) break;
+				if(gst[i].symbol_name == Identifier.id){
+					inside = true;
+					break;
+				}
+				count+= gst[i].size;
+				i++;
+			}
+			if(inside == true){
+				//Corresponding to function call.
+				// code<<"addi $s1,$fp,"<<offset<<endl;
+				// code<<"addi $sp,$sp,-4"<<endl;
+				// code<<"sw $s1,0($sp)";
+				//Write some awesome code later.
+			}
+		}
+	}
+	else{
+		//Store value on stack
+		code<<"lw $s1,"<<current->local_table[i].offset<<"($fp)"<<endl;
+		code<<"addi $sp,$sp,-4"<<endl;
+		code<<"sw $s1,0($sp)";
+	}
 }
 
 ArrayRef :: ArrayRef(abstract_astnode* a, abstract_astnode* b){

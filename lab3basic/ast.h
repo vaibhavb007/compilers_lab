@@ -9,7 +9,7 @@ class abstract_astnode
 {
 public:
     virtual void print () = 0;
-    virtual void gencode(vector<global_entry> gst, funTable* current) = 0;
+    virtual void gencode(vector<global_entry> gst, funTable* current, bool islhs) = 0;
     location = 0;
     string type = "null";
     bool lvalue;
