@@ -18,6 +18,11 @@ parse.cc Parser.h Parserbase.h Parser.ih: parse.y
 	sed -i '\|void Parser::print__()| i Meta__::SType ParserBase::d_val__; ' parse.cc
 	sed -i '\|typedef Meta__::SType STYPE__;| a \\tpublic: static int lineNr; ' Parserbase.h;
 	sed -i '\|void Parser::print__()| i int ParserBase::lineNr = 1; ' parse.cc
+	echo ".data:" > temp
+	cat temp data.s gen.s > code.s
+	$(RM) gen.s
+	cat code.s > gen.s
+	# $(RM) data.s code.s temp *~
 
 
 .PHONY: clean

@@ -1,5 +1,6 @@
 ofstream code ("gen.s", ofstream::out);
-int count = 0;
+ofstream data ("data.s", ofstream::out);
+int count = 0, label = 0;
 global_entry :: global_entry(bool a, string b, string c, funTable*d){
 	gl = a;
 	symbol_name = b;
@@ -144,21 +145,46 @@ void fncall :: print(){
 }
 
 void fncall :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-	// string name = ((Identifier*)id) -> id;
-	// int ret_size = 0;
-	// for(int i = 0; i<gst.size(); i++){
-	// 	if(gst[i].gl && gst[i].symbol_name == name){
-	// 		ret_size = get_size(gst[i].symbol_name.ret_type);
-	// 	}
-	// }
-	// code<<"#space on stack for return value\n";
-	// code<<"addi $sp, $sp, "<<ret_size<<"\n";
-	// code<<"#parameters put on stack\n";
-	// for(int i = 0; i<exprList.size(); i++){
-	// 	exprList[i]->gencode(gst, funTable, false);
-	// }
-	// code<<"jal "<<name<<endl;
-	//pick return value from stack
+	string name = ((Identifier*)id) -> id;
+	int ret_size = 0;
+	if(name != "printf"){
+		for(int i = 0; i<gst.size(); i++){
+			if(gst[i].gl && gst[i].symbol_name == name){
+				ret_size = get_size(gst[i].ret_type);
+			}
+		}
+		code<<"#space on stack for return value\n";
+		code<<"addi $sp, $sp, "<<ret_size<<"\n";
+		code<<"#parameters put on stack\n";
+	}
+	for(int i = exprList.size()-1; i>=0; i--){
+		exprList[i]->gencode(gst, current, false);
+	}
+	if(name != "printf"){
+		code<<"jal "<<name<<endl;
+		//pick return value from stack
+	}
+	else{
+		for(int i = 0; i<exprList.size(); i++){
+			code<<"add $sp, $sp, 4\n";
+			if(exprList[i]->type == "INT"){
+				code<<"lw $s1, -4($sp)"<<endl;
+				code<<"move $a0, $s1"<<endl;
+				code<<"li $v0, 1"<<endl;
+				code<<"syscall"<<endl;
+			}
+			else if(exprList[i]->type == "FLOAT"){
+				code<<"lwcZ $f12, -4($sp)"<<endl;
+				code<<"li $v0, 2"<<endl;
+				code<<"syscall"<<endl;
+			}
+			else{
+				code<<"lw $a0, -4($sp)"<<endl;
+				code<<"li $v0, 4"<<endl;
+				code<<"syscall"<<endl;
+			}
+		}
+	}
 }
 
 Ass :: Ass(abstract_astnode* x, abstract_astnode* y){
@@ -176,13 +202,29 @@ void Ass :: print(){
 void Ass :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 	a->gencode(gst, current, true);
 	b->gencode(gst, current, false);
-	code<<"#assignment begins\n";
-	code<<"addi $sp, $sp, 8\n";
-	code<<"lw $s0, -4($sp)\n";
-	code<<"lw $s1, -8($sp)\n";
-	code<<"addi $sp, $sp, -4\n";
-	code<<"sw $s1, 0($s0)\n";
-	code<<"#assignment ends\n";
+	if(a->type == "INT"){
+		code<<"#assignment begins\n";
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lw $s0, -4($sp)\n";
+		code<<"lw $s1, -8($sp)\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"sw $s1, 0($sp)\n";
+		code<<"sw $s1, 0($s0)\n";
+		code<<"#assignment ends\n";
+	}
+	else if(a->type == "FLOAT"){
+		code<<"#assignment begins\n";
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f1, 0($sp)\n";
+		code<<"swc1 $s1, 0($s0)\n";
+		code<<"#assignment ends\n";	
+	}
+	else{
+
+	}
 }
 
 Return :: Return(abstract_astnode* a){
@@ -320,7 +362,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "PLUS-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"add.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "MINUS-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -331,7 +378,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "MINUS-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"sub.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "MULT-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -342,7 +394,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "MULT-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"mul.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "DIV-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -353,7 +410,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "DIV-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"div.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "LT-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -364,7 +426,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "LT-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"c.lt.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "GT-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -375,7 +442,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "GT-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"c.gt.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "LE_OP-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -387,7 +459,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "LE_OP-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"c.le.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "GE_OP-INT"){
 		code<<"addi $sp, $sp, 8\n";
@@ -399,7 +476,12 @@ void opdual :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 		code<<"sw $s0, 0($sp)\n";
 	}
 	else if(op == "GE_OP-FLOAT"){
-
+		code<<"addi $sp, $sp, 8\n";
+		code<<"lwc1 $f0, -4($sp)\n";
+		code<<"lwc1 $f1, -8($sp)\n";
+		code<<"c.ge.s $f0, $f0, $f1\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"swc1 $f0, 0($sp)\n";
 	}
 	else if(op == "OR_OP"){
 		code<<"addi $sp, $sp, 8\n";
@@ -445,51 +527,76 @@ opsingle :: opsingle(string type, abstract_astnode* a){
 void opsingle :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 	if(optype == "TO-INT"){
 		//Load, convert and store again. You can load from stack again if you wish.
-		a->gencode(gst, current, false);
+		op->gencode(gst, current, false);
 		code<<"lwcZ $f0, 0($sp)"<<endl;
 		code<<"cvt.w.s $f1, $f0"<<endl;
-		code<<"swcZ $f1,0 ($y)"<<endl;
+		code<<"swcZ $f1, 0($sp)"<<endl;
 	}
 	else if(optype=="TO-FLOAT"){
 		//Load, convert and store again. You can load from stack again if you wish.
-		a->gencode(gst, current, false);
-		code<<"lwcZ $f0,0 ($sp)"<<endl;
+		op->gencode(gst, current, false);
+		code<<"lwcZ $f0, 0($sp)"<<endl;
 		code<<"cvt.s.w $f1, $f0"<<endl;
-		code<<"swcZ $f1,0 ($y)"<<endl;
+		code<<"swcZ $f1, 0($sp)"<<endl;
 	}
 	//handling other opsingle operations which aren't type conversions.
 	else if(optype=="PP"){
-		a->gencode(gst, current, true);
-		code<<"lw $s0, 0($sp)"<<endl;
-		code<<"lw $s1, 0($s0)"<<endl;
-		code<<"addi $s1, $s1, 1"<<endl;
-		code<<"sw $s1, 0($sp)"<<endl;
-		code<<"sw $s1, 0($s0)"<<endl;
+		op->gencode(gst, current, true);
+		if(op->type == "INT"){
+			code<<"lw $s0, 0($sp)"<<endl;
+			code<<"lw $s1, 0($s0)"<<endl;
+			code<<"addi $s1, $s1, 1"<<endl;
+			code<<"sw $s1, 0($sp)"<<endl;
+			code<<"sw $s1, 0($s0)"<<endl;
+		}
+		else if(op->type == "FLOAT"){
+			code<<"lw $s0, 0($sp)"<<endl;
+			code<<"lwc1 $f1, 0($s0)"<<endl;
+			code<<"li $f3, 1"<<endl;
+			code<<"add.s $f1, $f1, $f3"<<endl;
+			code<<"sw $f1, 0($sp)"<<endl;
+			code<<"sw $f1, 0($s0)"<<endl;
+		}
 	}
 	else if(optype=="*"){
-		//Not sure about this. Please check later.
-		a->gencode(gst, current, true);
-		code<<"lw $s1, 0($sp)"<<endl;
-		code<<"lw $s1, 0($s1)"<<endl;
-		code<<"sw $s1, 0($sp)"<<endl;
+		op->gencode(gst, current, true);
+		if(islhs){
+			//no need
+		}
+		else{
+			if(op->type == "INT"){
+				code<<"lw $s1, 0($sp)"<<endl;
+				code<<"lw $s1, 0($s1)"<<endl;
+				code<<"sw $s1, 0($sp)"<<endl;
+			}
+			else if(op->type == "FLOAT"){
+				code<<"lw $s1, 0($sp)"<<endl;
+				code<<"lw $f1, 0($s1)"<<endl;
+				code<<"sw $f1, 0($sp)"<<endl;	
+			}
+		}
 	}
 	else if(optype=="-"){
-		a->gencode(gst, current, false);
-		if(a-<type == "INT"){
+		op->gencode(gst, current, false);
+		if(op->type == "INT"){
 			code<<"lw $s1, 0($sp)\n";
 			code<<"li $s0, -1\n";
 			code<<"mul $s1, $s1, $s0\n";
 			code<<"sw $s1, 0($sp)\n";
 		}
 		else{
-
+			code<<"lwc1 $f1, 0($sp)\n";
+			code<<"li $f0, -1\n";
+			code<<"mul.s $f1, $f1, $f0\n";
+			code<<"swc1 $f1, 0($sp)\n";	
 		}
 	}
 	else if(optype == "!"){
 
 	}
 	else if(optype == "&"){
-
+		op->gencode(gst, current, true);
+		//gencode handles the stack's address
 	}
 }
 
@@ -509,7 +616,10 @@ void FloatConst :: print(){
 }
 
 void FloatConst :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	code<<"#pushing "<<this->cons<<" on stack\n";
+	code<<"li $f1, "<<this->cons<<endl;
+	code<<"addi $sp, $sp, -4\n";
+	code<<"swc0 0($sp)\n";
 }
 
 IntConst ::	IntConst(int a){
@@ -536,7 +646,11 @@ void StringConst :: print(){
 }
 
 void StringConst :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	data<<"str"<<label<<": .asciiz "<<this->cons<<"\n";
+	code<<"la, $s0, str"<<label<<endl;
+	code<<"addi $sp, $sp, -4\n";
+	code<<"sw $s0, 0($sp)\n";
+	label++;
 }
 
 Identifier :: Identifier(string a){
@@ -569,8 +683,15 @@ void Identifier :: gencode(vector<global_entry> gst, funTable* current, bool isl
 				code<<"addi $sp, $sp, -4\n";
 				code<<"sw $s1, 0($sp)\n";
 			}
+			else if(this->type == "FLOAT"){
+				code<<"lwc1 $f1,"<<current->local_table[i].offset<<"($fp)"<<endl;
+				code<<"addi $sp, $sp, -4\n";
+				code<<"swc1 $f1, 0($sp)\n";
+			}
 			else{
-
+				code<<"addi $s1, $fp, "<<current->local_table[i].offset<<endl;
+				code<<"addi $sp, $sp, -4\n";
+				code<<"sw $s1, 0($sp)\n";
 			}
 		}
 	}
@@ -583,7 +704,7 @@ void Identifier :: gencode(vector<global_entry> gst, funTable* current, bool isl
 			}
 		}
 		if(ingst){
-
+			//no code here, mostly
 		}
 	}
 }
@@ -601,8 +722,8 @@ void ArrayRef :: print(){
 }
 
 void ArrayRef :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-	id->gencode(gst, funTable, true);
-	arr->gencode(gst, funTable, false);
+	id->gencode(gst, current, true);
+	arr->gencode(gst, current, false);
 	code<<"addi $sp, $sp, 8\n";
 	code<<"lw $s0, -4($sp)\n";
 	code<<"lw $s1, -8($sp)\n";
@@ -630,7 +751,7 @@ void Pointer :: print(){
 }
 
 void Pointer :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+//handled in opsingle
 }
 
 Deref :: Deref(abstract_astnode* a){
@@ -644,7 +765,7 @@ void Deref :: print(){
 }
 
 void Deref :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+//handled in opsingle
 }
 
 Member :: Member(abstract_astnode*a, abstract_astnode* b){
@@ -660,7 +781,27 @@ void Member :: print(){
 }
 
 void Member :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	lexpr->gencode(gst, current, true);
+	string name = ((Identifier*)id)->id;
+	string type = lexpr->type;
+	type.substr(7, type.length()-7);
+	for(int i = 0; i<gst.size(); i++){
+		if(gst[i].symbol_name == type){
+			for(int j = 0; j<gst[i].symtab->local_table.size(); j++){
+				if(gst[i].symtab->local_table[j].symbol_name == name){
+					code<<"lw $s0, 0($sp)\n";
+					code<<"addi $s0, $s0, "<<gst[i].symtab->local_table[j].offset<<endl;
+					if(islhs){
+						code<<"sw $s0, 0($sp)\n";
+					}
+					else{
+						code<<"sw $s0, 0($s0)\n";
+						code<<"sw $s0, 0($sp)\n";
+					}
+				}
+			}
+		}
+	}
 }
 
 Arrow :: Arrow(abstract_astnode*a, abstract_astnode*b){
@@ -676,7 +817,27 @@ void Arrow :: print(){
 }
 
 void Arrow :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	lexpr->gencode(gst, current, true);
+	string name = ((Identifier*)id)->id;
+	string type = lexpr->type;
+	type.substr(7, type.length()-7);
+	for(int i = 0; i<gst.size(); i++){
+		if(gst[i].symbol_name == type){
+			for(int j = 0; j<gst[i].symtab->local_table.size(); j++){
+				if(gst[i].symtab->local_table[j].symbol_name == name){
+					code<<"lw $s0, 0($sp)\n";
+					code<<"addi $s0, $s0, "<<gst[i].symtab->local_table[j].offset<<endl;
+					if(islhs){
+						code<<"sw $s0, 0($sp)\n";
+					}
+					else{
+						code<<"sw $s0, 0($s0)\n";
+						code<<"sw $s0, 0($sp)\n";
+					}
+				}
+			}
+		}
+	}
 }
 
 un_operator :: un_operator(string s){
@@ -688,7 +849,7 @@ void un_operator :: print(){
 }
 
 void un_operator :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+//nothing here
 }
 
 Args :: Args(abstract_astnode* a){
@@ -704,7 +865,9 @@ void Args :: add_arg(abstract_astnode* a){
 }
 
 void Args :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	for(int i = 0; i<args.size(); i++){
+		args[i]->gencode(gst, current, false);
+	}
 }
 
 string compatible(string a, string b){
@@ -714,7 +877,7 @@ string compatible(string a, string b){
 		return ret;
 	}
     if(a == "INT" && b == "FLOAT"){
-		ret ="10FLOAT";
+		ret ="20INT";
 		// cout<<"here2"<<" "<<ret<<endl;
 		return ret;
 	}
@@ -875,6 +1038,54 @@ string compute_type(vector<string> a, string b){
 		b = a[i] + b + ')';
 	}
 	return b;
+}
+
+int get_size(string s){
+	if(s=="INT" || s=="FLOAT"){
+		return 4;
+	}
+	string s1;
+	string s2;
+	s1 = s.substr(0,5);
+	if(s1 == "point"){
+		return 4;
+	}
+	if(s1 == "struc"){
+		s2 = s.substr(7, s.length() - 7);
+		int i;
+		for(i=0; i<gst.size(); i++){
+			if(s2 == gst[i].symbol_name){
+				return gst[i].size;
+			}
+		}
+		cerr<<"Panic: struct not found in global symbol table"<<endl;
+		return -1;
+	}
+	if(s1 == "array"){
+		string s2;
+		s2 = s.substr(0,s.length() - 1);
+		int pos = s2.find(",");
+		// cout<<"fsg "<<pos<<endl;
+		if(pos < 0){
+			int count = 0;
+			for(int i = 6; i<s.length()-1; i++){
+				count = s[i] - 48 + count*10;
+				// cout<<"here "<<s[i]<<" "<<i<<endl;
+			}
+			return count;
+		}
+		s2 = s2.substr(pos);
+		s2 = s2.substr(1,s2.length() - 1);
+		int count = 0;
+		for(int i=6; i<pos; i++){
+			count = s[i] - 48 + count*10;
+		}
+		// cout<<"here "<<count<<endl;
+
+		return count*get_size(s2);
+
+	}
+
 }
 
 vector<global_entry> gst;

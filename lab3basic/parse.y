@@ -928,6 +928,7 @@ postfix_expression
                 s = gst[i].ret_type;
             }
         }
+        if($1 == "printf") flag == true;
         if(!count && flag){
             Identifier*a = new Identifier($1);
             $$ = new fncall(a);
@@ -947,118 +948,126 @@ postfix_expression
     }
     | IDENTIFIER '(' expression_list ')'    // Cannot appear on the LHS of '='  Enforce this.
     {
-        int countargs=0, actualargs=((Args*)$3)->args.size();
-        string s;
-        bool flag = false;
-        funTable *curr;
-        for(int i=0; i<gst.size(); i++){
-            if(gst[i].gl && gst[i].symbol_name == $1){
-                for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
-                    if(!(gst[i].symtab)->local_table[j].isparam) countargs++;
-                }
-                s = gst[i].ret_type;
-                curr = gst[i].symtab;
-                flag = true;
-                break;
-            }
+        if($1 == "printf"){
+            Identifier*a = new Identifier($1);
+            $$ = new fncall(a,((Args*)$3)->args);
+            $$->lvalue = false;
+            $$->type = "VOID";
         }
-        if(flag){
-            if(countargs == actualargs){
-                bool sign = true;
-                for(int i=0; i<countargs; i++){
-                    string t = compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type);
-                    if(t == "NOPE"){
-                        sign = false;
-                        std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
-                        std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
-                        exit(0);
+        else{
+            int countargs=0, actualargs=((Args*)$3)->args.size();
+            string s;
+            bool flag = false;
+            funTable *curr;
+            for(int i=0; i<gst.size(); i++){
+                if(gst[i].gl && gst[i].symbol_name == $1){
+                    for(int j=0; j<(gst[i].symtab)->local_table.size(); j++){
+                        if(!(gst[i].symtab)->local_table[j].isparam) countargs++;
                     }
-                    else if(t.substr(0,2)=="00"){
-
-                    }
-                    else if(t.substr(0,2)=="20"){
-                        string s = t.substr(2,t.length() - 2);
-                        s = "TO-" + s;
-                        opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
-                        string type = (((Args*)$3)->args[i])->type;
-                        bool lvalue = (((Args*)$3)->args[i])->lvalue;
-                        ((Args*)$3)->args[i] = a;
-                        (((Args*)$3)->args[i])->type = type;
-                        (((Args*)$3)->args[i])->lvalue = lvalue;
-                    }
-                    else if(t.substr(0,2)=="10"){
-                        t  = t.substr(2,t.length() -2);
-                        string s = t.substr(0,5);
-                        if(s == "array"){
-                            // s = t;
-                            // s = "TO-" + s;
-                            // opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
-                            string type = (((Args*)$3)->args[i])->type;
-                            bool lvalue = (((Args*)$3)->args[i])->lvalue;
-                            // ((Args*)$3)->args[i] = a;
-                            (((Args*)$3)->args[i])->type = type;
-                            (((Args*)$3)->args[i])->lvalue = lvalue;
+                    s = gst[i].ret_type;
+                    curr = gst[i].symtab;
+                    flag = true;
+                    break;
+                }
+            }
+            if(flag){
+                if(countargs == actualargs){
+                    bool sign = true;
+                    for(int i=0; i<countargs; i++){
+                        string t = compatible(curr->local_table[i].type, (((Args*)$3)->args[i])->type);
+                        if(t == "NOPE"){
+                            sign = false;
+                            std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
+                            std::cerr<<ParserBase::lineNr<<": Note: expected ‘"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
+                            exit(0);
                         }
-                        s = t.substr(0,3);
-                        if(curr->local_table[i].type == "INT" && t == "FLOAT"){
-                            opsingle*a = new opsingle("TO-INT", ((Args*)$3)->args[i]);
+                        else if(t.substr(0,2)=="00"){
+
+                        }
+                        else if(t.substr(0,2)=="20"){
+                            string s = t.substr(2,t.length() - 2);
+                            s = "TO-" + s;
+                            opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
                             string type = (((Args*)$3)->args[i])->type;
                             bool lvalue = (((Args*)$3)->args[i])->lvalue;
                             ((Args*)$3)->args[i] = a;
                             (((Args*)$3)->args[i])->type = type;
                             (((Args*)$3)->args[i])->lvalue = lvalue;
                         }
-                        s = t.substr(0,7);
-                        if(s == "pointer"){
-                            if((((Args*)$3)->args[i])->type.substr(0,5) == "array"){
-                                s = t;
-                                s = "TO-" + s;
-                                opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                        else if(t.substr(0,2)=="10"){
+                            t  = t.substr(2,t.length() -2);
+                            string s = t.substr(0,5);
+                            if(s == "array"){
+                                // s = t;
+                                // s = "TO-" + s;
+                                // opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                                string type = (((Args*)$3)->args[i])->type;
+                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
+                                // ((Args*)$3)->args[i] = a;
+                                (((Args*)$3)->args[i])->type = type;
+                                (((Args*)$3)->args[i])->lvalue = lvalue;
+                            }
+                            s = t.substr(0,3);
+                            if(curr->local_table[i].type == "INT" && t == "FLOAT"){
+                                opsingle*a = new opsingle("TO-INT", ((Args*)$3)->args[i]);
                                 string type = (((Args*)$3)->args[i])->type;
                                 bool lvalue = (((Args*)$3)->args[i])->lvalue;
                                 ((Args*)$3)->args[i] = a;
                                 (((Args*)$3)->args[i])->type = type;
                                 (((Args*)$3)->args[i])->lvalue = lvalue;
                             }
-                            if((((Args*)$3)->args[i])->type.substr(0,5) == "point"){
-                                s = "TO-" + t;
-                                opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
-                                string type = (((Args*)$3)->args[i])->type;
-                                bool lvalue = (((Args*)$3)->args[i])->lvalue;
-                                ((Args*)$3)->args[i] = a;
-                                (((Args*)$3)->args[i])->type = type;
-                                (((Args*)$3)->args[i])->lvalue = lvalue;
+                            s = t.substr(0,7);
+                            if(s == "pointer"){
+                                if((((Args*)$3)->args[i])->type.substr(0,5) == "array"){
+                                    s = t;
+                                    s = "TO-" + s;
+                                    opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                                    string type = (((Args*)$3)->args[i])->type;
+                                    bool lvalue = (((Args*)$3)->args[i])->lvalue;
+                                    ((Args*)$3)->args[i] = a;
+                                    (((Args*)$3)->args[i])->type = type;
+                                    (((Args*)$3)->args[i])->lvalue = lvalue;
+                                }
+                                if((((Args*)$3)->args[i])->type.substr(0,5) == "point"){
+                                    s = "TO-" + t;
+                                    opsingle*a = new opsingle(s, ((Args*)$3)->args[i]);
+                                    string type = (((Args*)$3)->args[i])->type;
+                                    bool lvalue = (((Args*)$3)->args[i])->lvalue;
+                                    ((Args*)$3)->args[i] = a;
+                                    (((Args*)$3)->args[i])->type = type;
+                                    (((Args*)$3)->args[i])->lvalue = lvalue;
+                                }
                             }
                         }
+                        else{
+                            sign = false;
+                            std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
+                            std::cerr<<ParserBase::lineNr<<": Note: expected '"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
+                            exit(0);
+                        }
+                    }
+                    if(sign){
+                        Identifier*a = new Identifier($1);
+                        $$ = new fncall(a,((Args*)$3)->args);
+                        $$->lvalue = false;
+                        $$->type = s;
+                    }
+                }
+                else{
+                    if(countargs<actualargs){
+                        std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
+                        exit(0);
                     }
                     else{
-                        sign = false;
-                        std::cerr<<ParserBase::lineNr<<": Error: incompatible type for argument "<<i+1<<" of '"<<$1<<"’\n";
-                        std::cerr<<ParserBase::lineNr<<": Note: expected '"<<curr->local_table[i].type<<"' but argument is of type '"<<(((Args*)$3)->args[i])->type<<"'\n";
+                        std::cerr<<ParserBase::lineNr<<": Error: too few arguments to function '"<<$1<<"' \n";
                         exit(0);
                     }
                 }
-                if(sign){
-                    Identifier*a = new Identifier($1);
-                    $$ = new fncall(a,((Args*)$3)->args);
-                    $$->lvalue = false;
-                    $$->type = s;
-                }
             }
             else{
-                if(countargs<actualargs){
-                    std::cerr<<ParserBase::lineNr<<": Error: too many arguments to function '"<<$1<<"' \n";
-                    exit(0);
-                }
-                else{
-                    std::cerr<<ParserBase::lineNr<<": Error: too few arguments to function '"<<$1<<"' \n";
-                    exit(0);
-                }
+                std::cerr<<ParserBase::lineNr<<": Error: undefined reference to '"<<$1<<"'\n";
+                exit(0);
             }
-        }
-        else{
-            std::cerr<<ParserBase::lineNr<<": Error: undefined reference to '"<<$1<<"'\n";
-            exit(0);
         }
     }
     | postfix_expression '[' expression ']'         //NEW STUFF HERE. PLEASE WRITE LATER.

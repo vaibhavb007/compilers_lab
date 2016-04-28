@@ -1,3 +1,9 @@
+.data:
+str0: .asciiz "yolo"
+str1: .asciiz "Hello, World"
+.data:
+str0: .asciiz "yolo"
+str1: .asciiz "Hello, World"
 main:
 #return address stored on the stack
 addi $sp, $sp, -4
