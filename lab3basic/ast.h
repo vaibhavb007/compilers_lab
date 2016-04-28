@@ -270,6 +270,8 @@ string compatible(string a, string b);
 
 string compute_type(vector<string> a, string b);
 
+int get_size(string s);
+
 extern vector<global_entry> gst;
 extern funTable* current;
 extern string type, old_type, fun_type;
