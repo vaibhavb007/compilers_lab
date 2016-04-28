@@ -249,6 +249,7 @@ compound_statement
     {
         $$ = new Empty();
         $$ -> print();
+        ((Seq*)$$)->isfunc = true;
         $$ -> gencode(gst, current, false);
     }
     | '{' statement_list '}'
@@ -256,6 +257,7 @@ compound_statement
         $$ = $2;
         std::cout<<fun_name<<" statement list \n";
         $$ -> print();
+        ((Seq*)$$)->isfunc = true;
         $$ -> gencode(gst, current, false);
     }
     | '{' declaration_list statement_list '}'
@@ -263,6 +265,7 @@ compound_statement
         $$ = $3;
         std::cout<<fun_name<<" declaration_list statement list \n";
         $$ -> print();
+        ((Seq*)$$)->isfunc = true;
         $$ -> gencode(gst, current, false);
     }
     ;

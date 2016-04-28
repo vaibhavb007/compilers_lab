@@ -82,40 +82,44 @@ void Seq :: print(){
 
 void Seq :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 	int size_locals = 0;
-	for(int i = 0; i<current->local_table.size(); i++){
-		if(current->local_table[i].isparam) size_locals += current->local_table[i].size;
+	if(this->isfunc){
+		for(int i = 0; i<current->local_table.size(); i++){
+			if(current->local_table[i].isparam) size_locals += current->local_table[i].size;
+		}
+		code<<gst[gst.size()-1].symbol_name<<":\n";
+		code<<"#return address stored on the stack\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"sw $ra, 0($sp)\n";
+		code<<"#dynamic link set up\n";
+		code<<"addi $sp, $sp, -4\n";
+		code<<"sw $fp, 0($sp)\n";
+		code<<"#set base of new activation record\n";
+		code<<"move $fp, $sp\n";
+		// code<<"#save callee saved registers\n";
+		// code<<"addi $sp, $sp, -8\n";
+		// code<<"sw $s0, -4($sp)\n";
+		// code<<"sw $s1, 0($sp)\n";
 	}
-	code<<gst[gst.size()-1].symbol_name<<":\n";
-	code<<"#return address stored on the stack\n";
-	code<<"addi $sp, $sp, -4\n";
-	code<<"sw $ra, 0($sp)\n";
-	code<<"#dynamic link set up\n";
-	code<<"addi $sp, $sp, -4\n";
-	code<<"sw $fp, 0($sp)\n";
-	code<<"#set base of new activation record\n";
-	code<<"move $fp, $sp\n";
-	// code<<"#save callee saved registers\n";
-	// code<<"addi $sp, $sp, -8\n";
-	// code<<"sw $s0, -4($sp)\n";
-	// code<<"sw $s1, 0($sp)\n";
 	code<<"#make space for locals on stack\n";
 	code<<"addi $sp, $sp, -"<<size_locals<<"\n";
 	for(int i = 0; i<this->stmtlist.size(); i++){
 		stmtlist[i]->gencode(gst, current, islhs);
 	}
-	// code<<"#restore registers\n";
-	// code<<"la $sp, -4($fp)\n";
-	// code<<"addi $sp, $sp, 8\n";
-	// code<<"lw $s0, -4($sp)\n";
-	// code<<"lw $s1, -8($sp)\n";
-	code<<"#set base pointer to activation record of calling function\n";
-	code<<"move $sp, $fp\n";
-	code<<"lw $fp, 0($fp)\n";
-	code<<"addi $sp, $sp, 4\n";
-	code<<"#return to caller\n";
-	code<<"lw $ra, 0($sp)\n";
-	code<<"addi $sp, $sp, 8\n";
-	code<<"jr $ra\n";
+	if(this->isfunc){
+		// code<<"#restore registers\n";
+		// code<<"la $sp, -4($fp)\n";
+		// code<<"addi $sp, $sp, 8\n";
+		// code<<"lw $s0, -4($sp)\n";
+		// code<<"lw $s1, -8($sp)\n";
+		code<<"#set base pointer to activation record of calling function\n";
+		code<<"move $sp, $fp\n";
+		code<<"lw $fp, 0($fp)\n";
+		code<<"addi $sp, $sp, 4\n";
+		code<<"#return to caller\n";
+		code<<"lw $ra, 0($sp)\n";
+		code<<"addi $sp, $sp, 8\n";
+		code<<"jr $ra\n";
+	}
 }
 
 fncall :: fncall(abstract_astnode* idef){
@@ -140,7 +144,8 @@ void fncall :: print(){
 }
 
 void fncall :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	string name = ((Identifier*)id) -> id;
+	// for(int i)
 }
 
 Ass :: Ass(abstract_astnode* x, abstract_astnode* y){
@@ -260,18 +265,20 @@ void For ::	print(){
 }
 
 void For :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
+	code<<"#begin of for\n";
 	iter1->gencode(gst, current, false);
-	cout<<"L"<<count<<":"<<endl;
+	code<<"L"<<count<<":"<<endl;
 	count++;
 	iter2->gencode(gst, current, false);
 	code<<"lw $s1, 0($sp)"<<endl;
-	code<<"addi $sp, $sp, 4";
+	code<<"addi $sp, $sp, 4\n";
 	code<<"beq $s1, $0, L"<<count<<endl;
 	compound->gencode(gst, current, false);
-	iter3->gencode(gst, current, false)
+	iter3->gencode(gst, current, false);
 	code<<"j L"<<count-1<<endl;
 	code<<"L"<<count<<":"<<endl;
 	count++;
+	code<<"#end of for\n";
 }
 
 opdual :: opdual(string optype, abstract_astnode* a, abstract_astnode* b){

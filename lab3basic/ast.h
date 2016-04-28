@@ -70,6 +70,7 @@ public:
 class Seq : public abstract_astnode
 {
 public:
+    bool isfunc = false;
     Seq();
     void add_node(abstract_astnode * a);
     vector<abstract_astnode*> stmtlist;
