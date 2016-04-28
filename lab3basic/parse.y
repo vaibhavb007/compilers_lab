@@ -64,9 +64,6 @@ function_definition
         size = 0;
     }
     compound_statement
-    {
-        $3-> gencode(gst, current);
-    }
     ;
 
 type_specifier                   // This is the information
@@ -252,18 +249,21 @@ compound_statement
     {
         $$ = new Empty();
         $$ -> print();
+        $$ -> gencode(gst, current, false);
     }
     | '{' statement_list '}'
     {
         $$ = $2;
         std::cout<<fun_name<<" statement list \n";
         $$ -> print();
+        $$ -> gencode(gst, current, false);
     }
     | '{' declaration_list statement_list '}'
     {
         $$ = $3;
         std::cout<<fun_name<<" declaration_list statement list \n";
         $$ -> print();
+        $$ -> gencode(gst, current, false);
     }
     ;
 

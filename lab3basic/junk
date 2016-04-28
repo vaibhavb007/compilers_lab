@@ -1,0 +1,6 @@
+main declaration_list statement list 
+(Block [
+(Ass(Identifier a)(IntConst 4))
+(Ass(Identifier b)(IntConst 5))
+(Ass(Identifier a)(MULT-INT(Identifier a)
+(Identifier b)))])

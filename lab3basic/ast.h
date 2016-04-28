@@ -5,12 +5,15 @@
 
 using namespace std;
 
+class global_entry;
+class fun_entry;
+class funTable;
 class abstract_astnode
 {
 public:
     virtual void print () = 0;
     virtual void gencode(vector<global_entry> gst, funTable* current, bool islhs) = 0;
-    location = 0;
+    // location = 0;
     string type = "null";
     bool lvalue;
 // virtual std::string generate_code(const symbolTable&) = 0;
@@ -61,6 +64,7 @@ class Empty : public abstract_astnode
 public:
     Empty();
     void print();
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Seq : public abstract_astnode
@@ -70,6 +74,7 @@ public:
     void add_node(abstract_astnode * a);
     vector<abstract_astnode*> stmtlist;
     void print();
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 
@@ -81,6 +86,7 @@ public:
     string s = "(Ass";
     abstract_astnode* a;
     abstract_astnode* b;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Return : public abstract_astnode
@@ -89,6 +95,7 @@ public:
     Return(abstract_astnode* a);
     void print();
     abstract_astnode* ret;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class If : public abstract_astnode
@@ -99,6 +106,7 @@ public:
     abstract_astnode* compound;
     void print();
     abstract_astnode* elsecompound;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class While : public abstract_astnode
@@ -108,6 +116,7 @@ public:
     void print();
     abstract_astnode* cond;
     abstract_astnode* compound;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class For : public abstract_astnode
@@ -119,6 +128,7 @@ public:
     abstract_astnode* iter2;
     abstract_astnode* iter3;
     abstract_astnode* compound;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class opdual : public abstract_astnode
@@ -129,6 +139,7 @@ public:
     abstract_astnode* op1;
     abstract_astnode* op2;
     string op;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class opsingle : public abstract_astnode
@@ -138,6 +149,7 @@ public:
     opsingle(string type, abstract_astnode* a);
     string optype;
     abstract_astnode* op;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class FloatConst : public abstract_astnode
@@ -146,6 +158,7 @@ public:
     FloatConst(float a);
     void print();
     float cons;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class IntConst : public abstract_astnode
@@ -154,6 +167,7 @@ public:
     IntConst(int a);
     void print();
     int cons;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class StringConst : public abstract_astnode
@@ -162,6 +176,7 @@ public:
     StringConst(string a);
     void print();
     string cons;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Identifier : public abstract_astnode
@@ -170,6 +185,7 @@ public:
     Identifier(string a);
     void print();
     string id;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class ArrayRef : public abstract_astnode
@@ -179,6 +195,7 @@ public:
     void print();
     abstract_astnode* id;
     abstract_astnode* arr;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Pointer : public abstract_astnode
@@ -187,6 +204,7 @@ public:
     Pointer(abstract_astnode* a);
     void print();
     abstract_astnode* pt;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Deref : public abstract_astnode
@@ -195,6 +213,7 @@ public:
     Deref(abstract_astnode* a);
     void print();
     abstract_astnode* deref;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Arrow : public abstract_astnode
@@ -204,6 +223,7 @@ public:
     void print();
     abstract_astnode* lexpr;
     abstract_astnode*id;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Member : public abstract_astnode
@@ -213,6 +233,7 @@ public:
     void print();
     abstract_astnode* lexpr;
     abstract_astnode* id;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class un_operator:public abstract_astnode{
@@ -220,6 +241,7 @@ public:
     un_operator(string s);
     string op_type;
     void print();
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class fncall: public abstract_astnode
@@ -230,6 +252,7 @@ public:
     abstract_astnode* id;
     void print();
     vector<abstract_astnode*> exprList;
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 class Args : public abstract_astnode
@@ -239,6 +262,7 @@ public:
     void add_arg(abstract_astnode* a);
     vector<abstract_astnode*> args;
     void print();
+    void gencode(vector<global_entry> gst, funTable* current, bool islhs);
 };
 
 string compatible(string a, string b);
