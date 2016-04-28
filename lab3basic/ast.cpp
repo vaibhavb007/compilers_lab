@@ -1,4 +1,5 @@
 ofstream code ("gen.s", ofstream::out);
+int count = 0;
 global_entry :: global_entry(bool a, string b, string c, funTable*d){
 	gl = a;
 	symbol_name = b;
@@ -164,7 +165,20 @@ void If :: print(){
 }
 
 void If :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	//Cond, compound and elsecompound are variables of this class.
+	//Make sure that the cond puts 0 or 1 at $sp when it executes. Assuming it here.
+	cond->gencode(gst, current, false);
+	code<<"lw $s1, 0($sp)"<<endl;
+	code<<"addi $sp, $sp, 4";
+	code<<"bne $s1, $0, L"<<count<<endl;
+	count++;
+	elsecompound->gencode(gst, current, false);
+	code<<"j L"<<count<<endl;
+	code<<"L"<<count-1<<":"<<endl;
+	compound->gencode(gst, current, false);
+	code<<"j L"<<count<<endl;
+	code<<"L"<<count<<":"<<endl;
+	count++;
 }
 
 While :: While(abstract_astnode* a, abstract_astnode* b){
@@ -181,7 +195,16 @@ void While :: print(){
 }
 
 void While :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	cout<<"L"<<count<<":"<<endl;
+	count++;
+	cond->gencode(gst, current, false);
+	code<<"lw $s1, 0($sp)"<<endl;
+	code<<"addi $sp, $sp, 4";
+	code<<"beq $s1, $0, L"<<count<<endl;
+	compound->gencode(gst, current, false);
+	code<<"j L"<<count-1<<endl;
+	code<<"L"<<count<<":"<<endl;
+	count++;
 }
 
 For :: For(abstract_astnode* a, abstract_astnode* b, abstract_astnode*c, abstract_astnode* d){
@@ -204,7 +227,18 @@ void For ::	print(){
 }
 
 void For :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	iter1->gencode(gst, current, false);
+	cout<<"L"<<count<<":"<<endl;
+	count++;
+	iter2->gencode(gst, current, false);
+	code<<"lw $s1, 0($sp)"<<endl;
+	code<<"addi $sp, $sp, 4";
+	code<<"beq $s1, $0, L"<<count<<endl;
+	compound->gencode(gst, current, false);
+	iter3->gencode(gst, current, false)
+	code<<"j L"<<count-1<<endl;
+	code<<"L"<<count<<":"<<endl;
+	count++;
 }
 
 opdual :: opdual(string optype, abstract_astnode* a, abstract_astnode* b){
