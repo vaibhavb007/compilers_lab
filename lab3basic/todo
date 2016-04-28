@@ -1,11 +1,14 @@
 Float
 
 Function calls
+return remaining rest done
+
 
 if-while-for (done)
 printf
 
-type-casting
+type-casting(done)
 
 array handling
 struct handling
+pointer handling

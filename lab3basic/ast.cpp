@@ -144,8 +144,21 @@ void fncall :: print(){
 }
 
 void fncall :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-	string name = ((Identifier*)id) -> id;
-	// for(int i)
+	// string name = ((Identifier*)id) -> id;
+	// int ret_size = 0;
+	// for(int i = 0; i<gst.size(); i++){
+	// 	if(gst[i].gl && gst[i].symbol_name == name){
+	// 		ret_size = get_size(gst[i].symbol_name.ret_type);
+	// 	}
+	// }
+	// code<<"#space on stack for return value\n";
+	// code<<"addi $sp, $sp, "<<ret_size<<"\n";
+	// code<<"#parameters put on stack\n";
+	// for(int i = 0; i<exprList.size(); i++){
+	// 	exprList[i]->gencode(gst, funTable, false);
+	// }
+	// code<<"jal "<<name<<endl;
+	//pick return value from stack
 }
 
 Ass :: Ass(abstract_astnode* x, abstract_astnode* y){
