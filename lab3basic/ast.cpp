@@ -377,7 +377,34 @@ opsingle :: opsingle(string type, abstract_astnode* a){
 }
 
 void opsingle :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
-
+	if(optype == "TO-INT"){
+		//Load, convert and store again. You can load from stack again if you wish.
+		code<<"lwcZ $f0,0 ($sp)"<<endl;
+		code<<"cvt.w.s $f1, $f0"<<endl;
+		code<<"swcZ $f1,0 ($y)"<<endl;
+	}
+	else if(optype=="TO-FLOAT"){
+		//Load, convert and store again. You can load from stack again if you wish.
+		code<<"lwcZ $f0,0 ($sp)"<<endl;
+		code<<"cvt.s.w $f1, $f0"<<endl;
+		code<<"swcZ $f1,0 ($y)"<<endl;
+	}
+	//handling other opsingle operations which aren't type conversions.
+	else if(optype=="PP"){
+		code<<"lw $s1, 0($sp)"<<endl;
+		code<<"addi $s1, $s1, 1"<<endl;
+		code<<"sw $s1, 0($sp)"<<endl;
+	}
+	else if(optype=="*"){
+		//Not sure about this. Please check later.
+		code<<"lw $s1, 0($sp)"<<endl;
+		code<<"lw $s1, 0($s1)"<<endl;
+		code<<"sw $s1, 0($sp)"<<endl;
+	}
+	//Check for other types too.
+	else{
+		cerr<<"Something going on in opsingle, case not considered."
+	}
 }
 
 void opsingle :: print(){
