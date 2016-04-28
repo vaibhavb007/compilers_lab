@@ -445,29 +445,36 @@ opsingle :: opsingle(string type, abstract_astnode* a){
 void opsingle :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 	if(optype == "TO-INT"){
 		//Load, convert and store again. You can load from stack again if you wish.
-		code<<"lwcZ $f0,0 ($sp)"<<endl;
+		a->gencode(gst, current, false);
+		code<<"lwcZ $f0, 0($sp)"<<endl;
 		code<<"cvt.w.s $f1, $f0"<<endl;
 		code<<"swcZ $f1,0 ($y)"<<endl;
 	}
 	else if(optype=="TO-FLOAT"){
 		//Load, convert and store again. You can load from stack again if you wish.
+		a->gencode(gst, current, false);
 		code<<"lwcZ $f0,0 ($sp)"<<endl;
 		code<<"cvt.s.w $f1, $f0"<<endl;
 		code<<"swcZ $f1,0 ($y)"<<endl;
 	}
 	//handling other opsingle operations which aren't type conversions.
 	else if(optype=="PP"){
-		code<<"lw $s1, 0($sp)"<<endl;
+		a->gencode(gst, current, true);
+		code<<"lw $s0, 0($sp)"<<endl;
+		code<<"lw $s1, 0($s0)"<<endl;
 		code<<"addi $s1, $s1, 1"<<endl;
 		code<<"sw $s1, 0($sp)"<<endl;
+		code<<"sw $s1, 0($s0)"<<endl;
 	}
 	else if(optype=="*"){
 		//Not sure about this. Please check later.
+		a->gencode(gst, current, true);
 		code<<"lw $s1, 0($sp)"<<endl;
 		code<<"lw $s1, 0($s1)"<<endl;
 		code<<"sw $s1, 0($sp)"<<endl;
 	}
 	else if(optype=="-"){
+		a->gencode(gst, current, false);
 		if(a-<type == "INT"){
 			code<<"lw $s1, 0($sp)\n";
 			code<<"li $s0, -1\n";
@@ -596,6 +603,20 @@ void ArrayRef :: print(){
 void ArrayRef :: gencode(vector<global_entry> gst, funTable* current, bool islhs){
 	id->gencode(gst, funTable, true);
 	arr->gencode(gst, funTable, false);
+	code<<"addi $sp, $sp, 8\n";
+	code<<"lw $s0, -4($sp)\n";
+	code<<"lw $s1, -8($sp)\n";
+	code<<"li $s3, "<<get_size(id->type)<<endl;
+	code<<"mul $s2, $s1, s3\n";
+	code<<"add $s0, $s0, $s2\n";
+	code<<"addi $sp, $sp, -4\n";
+	if(islhs){
+		code<<"sw $s0, 0($sp)\n";
+	}
+	else{
+		code<<"lw $s0, 0($s0)\n";
+		code<<"sw $s0, 0($sp)\n";	
+	}
 }
 
 Pointer :: Pointer(abstract_astnode* a){
